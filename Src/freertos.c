@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
@@ -80,7 +80,7 @@
 /* USER CODE BEGIN Variables */
 extern struct netif gnetif;
 typedef struct struct_sock_t {
-	uint16_t port;
+	struct netconn * conn;
 } struct_sock;
 struct_sock sock01, sock02;
 
@@ -89,7 +89,7 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-static void udp_thread(void *arg);
+static void tcp_thread(void *arg);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -98,39 +98,39 @@ extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
 void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
+	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+	/* USER CODE END RTOS_THREADS */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+	/* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -140,21 +140,29 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for LWIP */
-  MX_LWIP_Init();
+void StartDefaultTask(void const * argument) {
+	/* init code for LWIP */
+	MX_LWIP_Init();
 
-  /* USER CODE BEGIN StartDefaultTask */
-	sock01.port = 7;
-	sock02.port = 8;
+	/* USER CODE BEGIN StartDefaultTask */
 	printf("lwIP init completed.\n");
-
-	sys_thread_new("udp_thread2", udp_thread, (void*) &sock02,
-	DEFAULT_THREAD_STACKSIZE/4, osPriorityNormal);
-
-	sys_thread_new("udp_thread1", udp_thread, (void*) &sock01,
-	DEFAULT_THREAD_STACKSIZE/4, osPriorityNormal);
+	struct netconn *conn;
+	err_t err;
+	conn = netconn_new(NETCONN_TCP);
+	if (conn != NULL) {
+		sock01.conn = conn;
+		sock02.conn = conn;
+		err = netconn_bind(conn, IP_ADDR_ANY, 80);
+		if (err == ERR_OK) {
+			netconn_listen(conn);
+			sys_thread_new("tcp_thread1", tcp_thread, (void*) &sock01,
+			DEFAULT_THREAD_STACKSIZE, osPriorityNormal);
+			sys_thread_new("tcp_thread2", tcp_thread, (void*) &sock02,
+			DEFAULT_THREAD_STACKSIZE, osPriorityNormal);
+		} else {
+			netconn_delete(conn);
+		}
+	}
 
 	/* Infinite loop */
 	for (;;) {
@@ -164,45 +172,39 @@ void StartDefaultTask(void const * argument)
 
 		osDelay(1);
 	}
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 //---------------------------------------------------------------
-static void udp_thread(void *arg) {
+static void tcp_thread(void *arg) {
 	err_t err, recv_err;
 	struct netconn *conn;
-	struct netbuf *buf;
-	ip_addr_t *addr;
-	unsigned short port;
+	struct netbuf *inbuf;
+	struct netconn *newconn;
 	struct_sock *arg_sock;
 	arg_sock = (struct_sock*) arg;
+	conn = arg_sock->conn;
+	u16_t buflen;
+	char* buf;
 
-	printf("Task for port %d created.\n", arg_sock->port);
-	conn = netconn_new(NETCONN_UDP);
-	if (conn != NULL) {
-		err = netconn_bind(conn, IP_ADDR_ANY, arg_sock->port);
+	for (;;) {
+		err = netconn_accept(conn, &newconn);
 		if (err == ERR_OK) {
-			printf("Connection on port %d created.\n", arg_sock->port);
 			for (;;) {
-				recv_err = netconn_recv(conn, &buf);
+				recv_err = netconn_recv(newconn, &inbuf);
 				if (recv_err == ERR_OK) {
-					printf("New message to port %d\n", arg_sock->port);
-					addr = netbuf_fromaddr(buf);
-					port = netbuf_fromport(buf);
-					netconn_connect(conn, addr, port);
-					netconn_send(conn, buf);
-					netbuf_delete(buf);
+					netbuf_data(inbuf, (void**) &buf, &buflen);
+				} else {
+					netbuf_delete(inbuf);
+					netconn_close(newconn);
+					break;
 				}
 			}
 		} else {
-			netconn_delete(conn);
+			osDelay(1);
 		}
-	}
-
-	for (;;) {
-		osDelay(1);
 	}
 }
 //---------------------------------------------------------------
