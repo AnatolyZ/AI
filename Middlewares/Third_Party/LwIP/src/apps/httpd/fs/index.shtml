@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Адаптер интерфейсв MPI/Profibus/Ethernet</title>
+
+  <style>
+   article, aside, details, figcaption, figure, footer,header,
+   hgroup, menu, nav, section { display: block; }
+  </style>
+ </head>
+ <body>
+ <img src="logo.png" alt = "LOGO">
+  <p>WEB</p>
+ </body>
+</html>

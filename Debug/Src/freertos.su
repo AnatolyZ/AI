@@ -1,0 +1,3 @@
+freertos.c:143:6:StartDefaultTask	16	static
+freertos.c:173:13:udp_thread	24	static
+freertos.c:105:6:MX_FREERTOS_Init	40	static
