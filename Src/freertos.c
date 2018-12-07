@@ -55,11 +55,12 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
 #include "string.h"
+#include "lwip/apps/fs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,7 +84,7 @@ extern struct netif gnetif;
 typedef struct struct_sock_t {
 	struct netconn * conn;
 } struct_sock;
-struct_sock sock01, sock02;
+struct_sock sock01;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -99,39 +100,39 @@ extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
 void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
+	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+	/* USER CODE END RTOS_THREADS */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+	/* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -141,28 +142,28 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for LWIP */
-  MX_LWIP_Init();
+void StartDefaultTask(void const * argument) {
+	/* init code for LWIP */
+	MX_LWIP_Init();
 
-  /* USER CODE BEGIN StartDefaultTask */
+	/* USER CODE BEGIN StartDefaultTask */
 	printf("lwIP init completed.\n");
 	struct netconn *conn;
 	err_t err;
 	conn = netconn_new(NETCONN_TCP);
 	if (conn != NULL) {
 		sock01.conn = conn;
-		sock02.conn = conn;
-		err = netconn_bind(conn, IP_ADDR_ANY, 102);
+		err = netconn_bind(conn, IP_ADDR_ANY, 80);
 		if (err == ERR_OK) {
 			netconn_listen(conn);
 			sys_thread_new("tcp_thread1", tcp_thread, (void*) &sock01,
-			DEFAULT_THREAD_STACKSIZE/4, osPriorityNormal);
-			sys_thread_new("tcp_thread2", tcp_thread, (void*) &sock02,
-			DEFAULT_THREAD_STACKSIZE/4, osPriorityNormal);
+			DEFAULT_THREAD_STACKSIZE / 4, osPriorityNormal);
+			printf("Binding ... OK\n");
+			osDelay(1);
 		} else {
 			netconn_delete(conn);
+			printf("Binding ... Err\n");
+			osDelay(1);
 		}
 	}
 
@@ -174,7 +175,7 @@ void StartDefaultTask(void const * argument)
 
 		osDelay(1);
 	}
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -190,32 +191,52 @@ static void tcp_thread(void *arg) {
 	conn = arg_sock->conn;
 	u16_t buflen;
 	char* buf;
-
+	struct fs_file file;
+	printf("Net task created.\n");
+	osDelay(1);
 	for (;;) {
 		err = netconn_accept(conn, &newconn);
 		if (err == ERR_OK) {
-			for (;;) {
-				recv_err = netconn_recv(newconn, &inbuf);
-				if (recv_err == ERR_OK) {
+			recv_err = netconn_recv(newconn, &inbuf);
+			if (recv_err == ERR_OK) {
+				if (netconn_err(newconn) == ERR_OK) {
 					netbuf_data(inbuf, (void**) &buf, &buflen);
-					if ((buf[0] == 0x0D) || (buf[0] == 0x0A)) {
-						netbuf_delete(inbuf);
-						continue;
+					if ((buflen >= 5) && (strncmp(buf, "GET /", 5) == 0)) {
+						printf("Connect\n");
+						osDelay(1);
+						if ((strncmp((char const *) buf, "GET / ", 6) == 0)
+								|| (strncmp((char const *) buf,
+										"GET /index.shtml", 16) == 0)) {
+							fs_open(&file, "/index.shtml");
+							netconn_write(newconn,
+									(const unsigned char* )(file.data),
+									(size_t )file.len, NETCONN_NOCOPY);
+							fs_close(&file);
+						} else if (strncmp((char const *) buf,
+								"GET /img/logo.png", 17) == 0) {
+							fs_open(&file, "/img/logo.png");
+							netconn_write(newconn,
+									(const unsigned char* )(file.data),
+									(size_t )file.len, NETCONN_NOCOPY);
+							fs_close(&file);
+						} else {
+							fs_open(&file, "/404.html");
+							netconn_write(newconn,
+									(const unsigned char* )(file.data),
+									(size_t )file.len, NETCONN_NOCOPY);
+							fs_close(&file);
+							printf("File not found\n");
+							osDelay(1);
+						}
+						buf[buflen] = 0;
+						printf("-> %s\n", buf);
+						osDelay(1);
 					}
-					char str_buf[64];
-					strncpy(str_buf,buf,buflen);
-					str_buf[buflen]=0;
-					printf(str_buf);
-					str_buf[buflen] = '\r';
-					str_buf[buflen+1] = '\n';
-					netconn_write(newconn, str_buf, buflen+2, NETCONN_COPY);
-					netbuf_delete(inbuf);
-				} else {
-					netbuf_delete(inbuf);
-					netconn_close(newconn);
-					break;
 				}
 			}
+			netconn_close(newconn);
+			netbuf_delete(inbuf);
+			netconn_delete(newconn);
 		} else {
 			osDelay(1);
 		}
