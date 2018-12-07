@@ -1,0 +1,24 @@
+﻿body {
+  background-color: #lime; 
+}
+#page {
+  width: 960px;
+  margin: 0 auto;
+  background-color: white; 
+}
+#header {
+  background-blend-mode: ;
+  height: 100px;
+  padding: 20px;
+}
+
+.butarea {
+  text-align: center;
+  padding: 20px;
+}
+ 
+.butcolor {
+  width: 150px;
+  height: 20px;
+  font-size: 12px;
+}

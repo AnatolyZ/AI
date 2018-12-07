@@ -2,37 +2,54 @@
 <html>
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <script>
+    var xhr;
+	function onload(){
+		xhr = new(XMLHttpRequest);
+	}
+	function button(){
+		xhr.open("GET", "color.html?c=1", true);
+		xhr.responseType = "text";
+		xhr.send(null);
+	}
+  </script>
+  <link rel="stylesheet" href="style.css">
   <title>Адаптер интерфейсов MPI/Profibus -- Ethernet</title>
  </head>
- <body>
+ <body onload="onload()">
+ <div id = "header">
 	<p align = "center">
 		<img src="img/logo.png" alt = "dispetcher_logo">
 	</p>
 	<p align = "center">
 		Настройка параметров адаптера интерфейсв (MPI/Profibus -- Ethernet) АИ-01
 	</p>
-	<form name="test" method="get" >
+</div>
+ <div id = "page">
     <table border="1" width="50%" cellpadding="5" align="center">
-	<tr>
-		<th>Параметр</th>
-		<th>Значение</th>
-	</tr>
-	<tr>
-		<td>IP-адрес</td>
-		<td align = "center" ><input name = "IP" type="text" value = "192.168.4.253" pattern = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" ></td>
-	</tr>
-	<tr>
-		<td>Скорость обмена</td>
-		<td align = "center" >
-			<select name = "BR">
-				<option>187500</option>
-				<option>9600</option>
-			</select>
-		</td>
-	</tr>
+		<tr>
+			<th>Параметр</th>
+			<th>Значение</th>
+		</tr>
+		
+		<tr>
+			<td>IP-адрес</td>
+			<td align = "center" ><input name = "IP" type="text" value = "192.168.4.253" pattern = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" ></td>
+		</tr>
+		
+		<tr>
+			<td>Скорость обмена</td>
+			<td align = "center" >
+				<select name = "BR">
+					<option>187500</option>
+					<option>9600</option>
+				</select>
+			</td>
+		</tr>	
 	</table>
-	<p align = "center"><input type="submit" value="Сохранить">
-	<input type="reset" value="Очистить"></p>
-	</form>
+	<div class = "butarea">
+		<input class = "butcolor" type="button" style="color: black; background-color: #gray;" onclick="button()" value="SEND"/>
+	</div>	
+ </div>
  </body>
 </html>

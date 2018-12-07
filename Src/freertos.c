@@ -169,10 +169,10 @@ void StartDefaultTask(void const * argument) {
 
 	/* Infinite loop */
 	for (;;) {
-
+/*
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
 		osDelay(249);
-
+*/
 		osDelay(1);
 	}
 	/* USER CODE END StartDefaultTask */
@@ -219,6 +219,16 @@ static void tcp_thread(void *arg) {
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
+						} else if (strncmp((char const *) buf,
+								"GET /style.css", 14) == 0) {
+							fs_open(&file, "/style.css");
+							netconn_write(newconn,
+									(const unsigned char* )(file.data),
+									(size_t )file.len, NETCONN_NOCOPY);
+							fs_close(&file);
+						} else if (strncmp((char const *) buf,
+								"GET /color.html?c=1",19) == 0) {
+							HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
 						} else {
 							fs_open(&file, "/404.html");
 							netconn_write(newconn,
