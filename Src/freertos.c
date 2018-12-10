@@ -61,6 +61,7 @@
 #include "lwip/api.h"
 #include "string.h"
 #include "lwip/apps/fs.h"
+#include "web_server.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,7 +76,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define MAIL_SIZE (uint32_t) 5
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -91,7 +92,7 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-static void tcp_thread(void *arg);
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -152,11 +153,10 @@ void StartDefaultTask(void const * argument) {
 	err_t err;
 	conn = netconn_new(NETCONN_TCP);
 	if (conn != NULL) {
-		sock01.conn = conn;
 		err = netconn_bind(conn, IP_ADDR_ANY, 80);
 		if (err == ERR_OK) {
 			netconn_listen(conn);
-			sys_thread_new("tcp_thread1", tcp_thread, (void*) &sock01,
+			sys_thread_new("web_server_thread", web_server_thread, (void*) conn,
 			DEFAULT_THREAD_STACKSIZE / 4, osPriorityNormal);
 			printf("Binding ... OK\n");
 			osDelay(1);
@@ -181,77 +181,7 @@ void StartDefaultTask(void const * argument) {
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 //---------------------------------------------------------------
-static void tcp_thread(void *arg) {
-	err_t err, recv_err;
-	struct netconn *conn;
-	struct netbuf *inbuf;
-	struct netconn *newconn;
-	struct_sock *arg_sock;
-	arg_sock = (struct_sock*) arg;
-	conn = arg_sock->conn;
-	u16_t buflen;
-	char* buf;
-	struct fs_file file;
-	printf("Net task created.\n");
-	osDelay(1);
-	for (;;) {
-		err = netconn_accept(conn, &newconn);
-		if (err == ERR_OK) {
-			recv_err = netconn_recv(newconn, &inbuf);
-			if (recv_err == ERR_OK) {
-				if (netconn_err(newconn) == ERR_OK) {
-					netbuf_data(inbuf, (void**) &buf, &buflen);
-					if ((buflen >= 5) && (strncmp(buf, "GET /", 5) == 0)) {
-						printf("Connect\n");
-						osDelay(1);
-						if ((strncmp((char const *) buf, "GET / ", 6) == 0)
-								|| (strncmp((char const *) buf,
-										"GET /index.shtml", 16) == 0)) {
-							fs_open(&file, "/index.shtml");
-							netconn_write(newconn,
-									(const unsigned char* )(file.data),
-									(size_t )file.len, NETCONN_NOCOPY);
-							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"GET /img/logo.png", 17) == 0) {
-							fs_open(&file, "/img/logo.png");
-							netconn_write(newconn,
-									(const unsigned char* )(file.data),
-									(size_t )file.len, NETCONN_NOCOPY);
-							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"GET /style.css", 14) == 0) {
-							fs_open(&file, "/style.css");
-							netconn_write(newconn,
-									(const unsigned char* )(file.data),
-									(size_t )file.len, NETCONN_NOCOPY);
-							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"GET /color.html?c=1",19) == 0) {
-							HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
-						} else {
-							fs_open(&file, "/404.html");
-							netconn_write(newconn,
-									(const unsigned char* )(file.data),
-									(size_t )file.len, NETCONN_NOCOPY);
-							fs_close(&file);
-							printf("File not found\n");
-							osDelay(1);
-						}
-						buf[buflen] = 0;
-						printf("-> %s\n", buf);
-						osDelay(1);
-					}
-				}
-			}
-			netconn_close(newconn);
-			netbuf_delete(inbuf);
-			netconn_delete(newconn);
-		} else {
-			osDelay(1);
-		}
-	}
-}
+
 //---------------------------------------------------------------
 /* USER CODE END Application */
 
