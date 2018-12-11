@@ -2,36 +2,43 @@
 <html>
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="icon" type="image/png" href="img/icon.png" />
   <script>
-    var xhr;
+    var xhr1;
+	var xhr2;
 	function onload(){
-		xhr = new(XMLHttpRequest);
-		xhr.open("GET", "AI.shtml?IP=" + Math.random(), true);
-		xhr.responseType = "text";
-		xhr.onload = function (oEvent) {
-			document.getElementById('IP_addr').innerHTML = '<input name = "IP" type="text" value = "' + xhr.response + '" pattern = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}">';
+		xhr1 = new(XMLHttpRequest);
+		xhr1.open("GET", "AI.shtml?IP=" + Math.random(), true);
+		xhr1.responseType = "text";
+		xhr1.onload = function (oEvent) {
+			document.getElementById('IP_addr').innerHTML = '<input name = "IP" type="text" value = "' + xhr1.response + '" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">';
 		}
-		xhr.send(null);
-	}
-	function button(){
-		xhr.open("GET", "AI.shtml?led=1", true);
-		xhr.responseType = "text";
-		xhr.send(null);
+		xhr1.send(null);
+		
+		xhr2 = new(XMLHttpRequest);
+		xhr2.open("GET", "AI.shtml?BR=" + Math.random(), true);
+		xhr2.responseType = "text";
+		xhr2.onload = function (oEvent) {
+			document.getElementById('Baud').innerHTML = '<input name = "BR" type="text" value = "' + xhr2.response + '" pattern = "[0-9]{1,8}">';
+		}
+		xhr2.send(null);
+		
 	}
 
   </script>
   <link rel="stylesheet" href="style.css">
   <title>Адаптер интерфейсов MPI/Profibus -- Ethernet</title>
  </head>
- <body onload="onload()">
+ <body onload = "onload()">
  <div id = "header">
 	<p align = "center">
 		<img src="img/logo.png" alt = "dispetcher_logo">
 	</p>
 	<p align = "center">
-		Настройка параметров адаптера интерфейсв (MPI/Profibus -- Ethernet) АИ-01
+		Настройка параметров адаптера интерфейсов (MPI/Profibus -- Ethernet) АИ-01
 	</p>
 </div>
+<form>
  <div id = "page">
     <table border="1" width="50%" cellpadding="5" align="center">
 		<tr>
@@ -41,22 +48,19 @@
 		
 		<tr>
 			<td>IP-адрес</td>
-			<td align = "center" id = "IP_addr"><input name = "IP" type="text" value = "Enter IP" pattern = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" ></td>
+			<td align = "center" id = "IP_addr"><input name = "IP" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+			</td>
 		</tr>
 		
 		<tr>
-			<td>Скорость обмена</td>
-			<td align = "center" >
-				<select name = "BR">
-					<option>187500</option>
-					<option>9600</option>
-				</select>
-			</td>
+			<td>Скорость обмена, Бод</td>
+			<td align = "center" id = "Baud"><input name = "BR" type="text" value = "Введите скорость обмена" pattern = "\d{1,9}">
 		</tr>	
 	</table>
-	<div class = "butarea">
-		<input class = "butcolor" type="button" style="color: black; background-color: #gray;" onclick="button()" value="Сохранить"/>
-	</div>	
+	
+	<p align="center" ><input type="submit" value = "Сохранить"></p>
+
  </div>
+ </form>
  </body>
 </html>
