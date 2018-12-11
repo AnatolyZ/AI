@@ -1,7 +1,7 @@
 port.c:259:13:prvTaskExitError	0	static
 port.c:292:13:prvPortStartFirstTask	0	static
 port.c:689:13:vPortEnableVFP	0	static
-port.c:229:14:pxPortInitialiseStack	8	static
+port.c:229:14:pxPortInitialiseStack	0	static
 port.c:273:6:SVC_Handler	0	static
 port.c:399:6:vPortEndScheduler	0	static
 port.c:407:6:vPortEnterCritical	0	static

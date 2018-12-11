@@ -11,7 +11,7 @@
 		xhr1.open("GET", "AI.shtml?IP=" + Math.random(), true);
 		xhr1.responseType = "text";
 		xhr1.onload = function (oEvent) {
-			document.getElementById('IP_addr').innerHTML = '<input name = "IP" type="text" value = "' + xhr1.response + '" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">';
+			document.getElementById('IP_addr').innerHTML = '<input name = "1" type="text" value = "' + xhr1.response + '" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">';
 		}
 		xhr1.send(null);
 		
@@ -19,7 +19,7 @@
 		xhr2.open("GET", "AI.shtml?BR=" + Math.random(), true);
 		xhr2.responseType = "text";
 		xhr2.onload = function (oEvent) {
-			document.getElementById('Baud').innerHTML = '<input name = "BR" type="text" value = "' + xhr2.response + '" pattern = "[0-9]{1,8}">';
+			document.getElementById('Baud').innerHTML = '<input name = "2" type="text" value = "' + xhr2.response + '" pattern = "[0-9]{1,8}">';
 		}
 		xhr2.send(null);
 		
@@ -48,13 +48,13 @@
 		
 		<tr>
 			<td>IP-адрес</td>
-			<td align = "center" id = "IP_addr"><input name = "IP" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+			<td align = "center" id = "IP_addr"><input name = "1" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
 			</td>
 		</tr>
 		
 		<tr>
 			<td>Скорость обмена, Бод</td>
-			<td align = "center" id = "Baud"><input name = "BR" type="text" value = "Введите скорость обмена" pattern = "\d{1,9}">
+			<td align = "center" id = "Baud"><input name = "2" type="text" value = "Введите скорость обмена" pattern = "\d{1,9}">
 		</tr>	
 	</table>
 	

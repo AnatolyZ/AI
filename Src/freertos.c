@@ -157,7 +157,7 @@ void StartDefaultTask(void const * argument) {
 		if (err == ERR_OK) {
 			netconn_listen(conn);
 			sys_thread_new("web_server_thread", web_server_thread, (void*) conn,
-			DEFAULT_THREAD_STACKSIZE / 4, osPriorityNormal);
+			DEFAULT_THREAD_STACKSIZE / 4, osPriorityAboveNormal);
 			printf("Binding ... OK\n");
 			osDelay(1);
 		} else {

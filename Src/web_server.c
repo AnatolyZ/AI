@@ -24,11 +24,62 @@ static const unsigned char PAGE_HEADER[] = {
 
 static portCHAR PAGE_BODY[768];
 extern struct netif gnetif;
+extern UART_HandleTypeDef huart5;
 
-static void get_query_parser(char * in_query);
+static void form_data_parser(char * in_buf);
+static uint read_param(char * out_buf, const char * const in_buf, const uint max_len);
 
-static void get_query_parser(char * in_query) {
+static uint read_param(char * out_buf, const char * const  in_buf, const uint max_len){
+	const char* tmp_p =  in_buf;
+	uint len = 0;
+	while (*tmp_p != ' ' && *tmp_p != '&' && len <= max_len) {
+		*out_buf++ = *tmp_p;
+		len++;
+		tmp_p++;
+	}
+	return len;
+}
 
+
+static void form_data_parser(char * in_buf) {
+	char par_str[16];
+	uint par_len;
+	uint32_t baudrate = 0;
+	while (*in_buf != ' ') {
+		if (*in_buf == '&') {
+			in_buf++;
+		}
+		int param_num = atoi(in_buf);
+		if (param_num < 9){
+			in_buf += 2;
+		} else {
+			in_buf += 3;
+		}
+		switch(param_num){
+		case 1:                                        //IP-address
+			par_len = read_param(par_str,in_buf,15);
+			par_str[par_len] = '\0';
+			printf("%s\n",par_str);
+			ip4_addr_t new_ip;
+			ipaddr_aton(par_str,&new_ip);
+			netif_set_ipaddr(&gnetif,&new_ip);
+			in_buf += par_len;
+			break;
+		case 2:                                       //Baudrate
+			par_len = read_param(par_str,in_buf,15);
+			par_str[par_len] = '\0';
+			baudrate = atoi(par_str);
+			HAL_UART_DeInit(&huart5);
+			huart5.Init.BaudRate = baudrate;
+			if (HAL_UART_Init(&huart5) != HAL_OK)
+			{
+			   Error_Handler();
+			}
+			printf("%d\n",baudrate);
+			in_buf += par_len;
+			break;
+		}
+	}
 }
 
 void web_server_thread(void *arg) {
@@ -41,9 +92,6 @@ void web_server_thread(void *arg) {
 	char* buf;
 	struct fs_file file;
 
-	//sprintf(PAGE_BODY,"%s%s%s%s",PAGE_HEADER_200_OK,PAGE_HEADER_SERVER,PAGE_HEADER_CONTENT_TEXT,ip4addr_ntoa(&gnetif.ip_addr));
-	//sprintf(PAGE_BODY,"%s%s",PAGE_HEADER,ip4addr_ntoa(&gnetif.ip_addr));
-
 	printf("Net task created.\n");
 	osDelay(1);
 	for (;;) {
@@ -55,50 +103,58 @@ void web_server_thread(void *arg) {
 				if (netconn_err(newconn) == ERR_OK) {
 					netbuf_data(inbuf, (void**) &buf, &buflen);
 					if ((buflen >= 5) && (strncmp(buf, "GET /", 5) == 0)) {
-						buf+=5;
+						buf += 5;
 						if ((strncmp((char const *) buf, " ", 1) == 0)
-								|| (strncmp((char const *) buf,
-										"index.shtml", 11) == 0)) {
+								|| (strncmp((char const *) buf, "index.shtml",
+										11) == 0)) {
 							fs_open(&file, "/index.shtml");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"img/logo.png", 12) == 0) {
+						} else if (strncmp((char const *) buf, "img/logo.png",
+								12) == 0) {
 							fs_open(&file, "/img/logo.png");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"img/icon.png", 12) == 0) {
+						} else if (strncmp((char const *) buf, "img/icon.png",
+								12) == 0) {
 							fs_open(&file, "/img/icon.png");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-						} else if (strncmp((char const *) buf, "style.css",
-								9) == 0) {
+						} else if (strncmp((char const *) buf, "style.css", 9)
+								== 0) {
 							fs_open(&file, "/style.css");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-						} else if (strncmp((char const *) buf,
-								"AI.shtml?led=1", 14) == 0) {
+						} else if (strncmp((char const *) buf, "AI.shtml?led=1",
+								14) == 0) {
 							HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
-						} else if (strncmp((char const *) buf,
-								"AI.shtml?IP=", 12) == 0) {
+						} else if (strncmp((char const *) buf, "AI.shtml?IP=",
+								12) == 0) {
 							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER,
 									ip4addr_ntoa(&gnetif.ip_addr));
 							netconn_write(newconn, PAGE_BODY,
 									strlen((char* )PAGE_BODY), NETCONN_COPY);
-						} else if (strncmp((char const *) buf,
-								"AI.shtml?BR=", 12) == 0) {
-							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER, "187500");
+						} else if (strncmp((char const *) buf, "AI.shtml?BR=",
+								12) == 0) {
+
+							sprintf(PAGE_BODY, "%s%d", PAGE_HEADER, huart5.Init.BaudRate);
 							netconn_write(newconn, PAGE_BODY,
 									strlen((char* )PAGE_BODY), NETCONN_COPY);
+						} else if (*buf == '?') {
+							form_data_parser(++buf);
+							fs_open(&file, "/index.shtml");
+							netconn_write(newconn,
+									(const unsigned char* )(file.data),
+									(size_t )file.len, NETCONN_NOCOPY);
+							fs_close(&file);
 						} else {
 							fs_open(&file, "/404.html");
 							netconn_write(newconn,
@@ -108,18 +164,12 @@ void web_server_thread(void *arg) {
 							printf("File not found\n");
 							osDelay(1);
 						}
-						buf[buflen] = 0;
-						printf("-> %s\n", buf);
-						osDelay(1);
 					}
 				}
 			}
 			netconn_close(newconn);
 			netbuf_delete(inbuf);
 			netconn_delete(newconn);
-		} else {
-			printf("Accept failed.\n");
-			osDelay(1000);
 		}
 	}
 }

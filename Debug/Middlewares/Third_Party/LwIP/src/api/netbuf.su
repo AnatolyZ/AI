@@ -6,4 +6,4 @@ netbuf.c:147:1:netbuf_ref	16	static
 netbuf.c:172:1:netbuf_chain	16	static
 netbuf.c:192:1:netbuf_data	8	static
 netbuf.c:218:1:netbuf_next	8	static
-netbuf.c:240:1:netbuf_first	0	static
+netbuf.c:240:1:netbuf_first	8	static
