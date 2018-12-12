@@ -42,7 +42,9 @@ MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
 CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 64K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
+FLASH_ISR (rx)      : ORIGIN = 0x8000000, LENGTH = 32K
+FLASH_EEPROM (xrw)      : ORIGIN = 0x8008000, LENGTH = 32K
+FLASH_CODE (rx)      : ORIGIN = 0x8010000, LENGTH = 448K
 }
 
 /* Define output sections */
@@ -54,7 +56,14 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >FLASH
+  } >FLASH_ISR
+
+  .eeprom_emul :
+  {
+    . = ALIGN(4);
+	KEEP(*(.EEPROM_Emul*))
+	. = ALIGN(4);
+  } > FLASH_EEPROM
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -71,7 +80,7 @@ SECTIONS
 
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
-  } >FLASH
+  } >FLASH_CODE
 
   /* Constant data goes into FLASH */
   .rodata :
@@ -80,35 +89,35 @@ SECTIONS
     *(.rodata)         /* .rodata sections (constants, strings, etc.) */
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
-  } >FLASH
+  } >FLASH_CODE
 
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH_CODE
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } >FLASH
+  } >FLASH_CODE
 
   .preinit_array     :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >FLASH
+  } >FLASH_CODE
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } >FLASH
+  } >FLASH_CODE
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } >FLASH
+  } >FLASH_CODE
 
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
@@ -123,7 +132,7 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM AT> FLASH
+  } >RAM AT> FLASH_CODE
 
   _siccmram = LOADADDR(.ccmram);
 
@@ -142,7 +151,7 @@ SECTIONS
     
     . = ALIGN(4);
     _eccmram = .;       /* create a global symbol at ccmram end */
-  } >CCMRAM AT> FLASH
+  } >CCMRAM AT> FLASH_CODE
 
   
   /* Uninitialized data section */

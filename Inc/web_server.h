@@ -15,6 +15,7 @@
 #include "string.h"
 #include "lwip/apps/fs.h"
 #include "lwip.h"
+#include "eeprom.h"
 
 
 void web_server_thread(void *arg);

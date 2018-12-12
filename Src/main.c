@@ -54,10 +54,10 @@
 #include "lwip.h"
 #include "usart.h"
 #include "gpio.h"
-
+#include "config_IA.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "eeprom.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -116,6 +116,15 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  HAL_FLASH_Unlock();
+  if (EE_Init() == HAL_OK){
+	  printf("EEPROM emulation init ... OK\n");
+  } else {
+	  printf("EEPROM emulation init ... ERROR\n");
+  }
+
+  init_FLASH_AI();
+
 
   /* USER CODE END SysInit */
 
