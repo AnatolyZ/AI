@@ -52,12 +52,15 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "lwip.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "config_IA.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "eeprom.h"
+#include "config_IA.h"
+#include "processUART.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -125,12 +128,12 @@ int main(void)
 
   init_FLASH_AI();
 
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_UART5_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -217,7 +220,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM8) {
+    CommandProcess();
+  }
   /* USER CODE END Callback 1 */
 }
 

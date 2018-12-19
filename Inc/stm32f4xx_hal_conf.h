@@ -157,7 +157,7 @@
   * @brief This is the HAL system configuration section
   */
 #define  VDD_VALUE		      ((uint32_t)3300U) /*!< Value of VDD in mv */           
-#define  TICK_INT_PRIORITY            ((uint32_t)0U)   /*!< tick interrupt priority */            
+#define  TICK_INT_PRIORITY            ((uint32_t)5U)   /*!< tick interrupt priority */            
 #define  USE_RTOS                     0U     
 #define  PREFETCH_ENABLE              1U
 #define  INSTRUCTION_CACHE_ENABLE     1U
@@ -190,8 +190,8 @@
 
 /* Section 2: PHY configuration section */
 
-/* PHY_USER_NAME_PHY_ADDRESS Address*/ 
-#define PHY_USER_NAME_PHY_ADDRESS           0U
+/* DP83848I_PHY_ADDRESS Address*/ 
+#define DP83848I_PHY_ADDRESS           1U
 /* PHY Reset delay these values are based on a 1 ms Systick interrupt*/ 
 #define PHY_RESET_DELAY                 ((uint32_t)0x000000FFU)
 /* PHY Configuration delay */

@@ -3,7 +3,7 @@ tasks.c:3635:13:prvResetNextTaskUnblockTime	0	static
 tasks.c:3581:14:prvDeleteTCB	8	static
 tasks.c:767:13:prvInitialiseNewTask	32	static
 tasks.c:3333:13:prvInitialiseTaskLists	16	static
-tasks.c:963:13:prvAddNewTaskToReadyList	8	static
+tasks.c:963:13:prvAddNewTaskToReadyList	16	static
 tasks.c:4692:13:prvAddCurrentTaskToDelayedList	16	static
 tasks.c:676:13:xTaskCreate	48	static
 tasks.c:1048:7:vTaskDelete	16	static
@@ -22,7 +22,7 @@ tasks.c:2181:7:pcTaskGetName	0	static
 tasks.c:2499:12:xTaskIncrementTick	24	static
 tasks.c:2017:12:xTaskResumeAll	16	static
 tasks.c:1224:7:vTaskDelay	8	static
-tasks.c:3365:13:prvCheckTasksWaitingTermination	8	static
+tasks.c:3365:13:prvCheckTasksWaitingTermination	16	static
 tasks.c:3131:8:prvIdleTask	8	static
 tasks.c:2761:6:vTaskSwitchContext	4	static
 tasks.c:1566:7:vTaskSuspend	16	static

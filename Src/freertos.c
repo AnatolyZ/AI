@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
@@ -63,11 +63,12 @@
 #include "lwip/apps/fs.h"
 #include "web_server.h"
 #include "eeprom.h"
+#include "processUART.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+xQueueHandle RecQHandle;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -87,6 +88,7 @@ typedef struct struct_sock_t {
 	struct netconn * conn;
 } struct_sock;
 struct_sock sock01;
+osThreadId processTaskHandle;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -102,39 +104,40 @@ extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* Create the thread(s) */
-	/* definition and creation of defaultTask */
-	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-	/* USER CODE BEGIN RTOS_THREADS */
-	/* add threads, ... */
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
+  osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 256);
+  processTaskHandle = osThreadCreate(osThread(processTask), NULL);
+  /* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
-	/* add queues, ... */
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
+  RecQHandle = xQueueCreate(8, sizeof( uint8_t ));
+  /* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -144,11 +147,12 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument) {
-	/* init code for LWIP */
-	MX_LWIP_Init();
+void StartDefaultTask(void const * argument)
+{
+  /* init code for LWIP */
+  MX_LWIP_Init();
 
-	/* USER CODE BEGIN StartDefaultTask */
+  /* USER CODE BEGIN StartDefaultTask */
 	printf("lwIP init completed.\n");
 	struct netconn *conn;
 	err_t err;
@@ -186,7 +190,7 @@ void StartDefaultTask(void const * argument) {
 		printf("BR_LS: %x\n", tmp);
 
 	}
-	/* USER CODE END StartDefaultTask */
+  /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
