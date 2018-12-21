@@ -2157,6 +2157,14 @@ Discarded input sections
  .text          0x00000000        0x0 Src\gpio.o
  .data          0x00000000        0x0 Src\gpio.o
  .bss           0x00000000        0x0 Src\gpio.o
+ .text          0x00000000        0x0 Src\log.o
+ .data          0x00000000        0x0 Src\log.o
+ .bss           0x00000000        0x0 Src\log.o
+ .debug_line    0x00000000        0x0 Src\log.o
+ .debug_str     0x00000000       0xfd Src\log.o
+ .comment       0x00000000       0x7d Src\log.o
+ .ARM.attributes
+                0x00000000       0x39 Src\log.o
  .text          0x00000000        0x0 Src\lwip.o
  .data          0x00000000        0x0 Src\lwip.o
  .bss           0x00000000        0x0 Src\lwip.o
@@ -2435,6 +2443,7 @@ LOAD Src\eeprom.o
 LOAD Src\ethernetif.o
 LOAD Src\freertos.o
 LOAD Src\gpio.o
+LOAD Src\log.o
 LOAD Src\lwip.o
 LOAD Src\main.o
 LOAD Src\processUART.o
