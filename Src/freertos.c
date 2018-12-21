@@ -68,7 +68,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-xQueueHandle RecQHandle;
+xQueueHandle frames_queue;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -119,10 +119,13 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
+
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
+	osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 1024);
+	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
@@ -131,12 +134,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 256);
-  processTaskHandle = osThreadCreate(osThread(processTask), NULL);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  RecQHandle = xQueueCreate(8, sizeof( uint8_t ));
+	frames_queue = xQueueCreate(16, sizeof(uint16_t));
   /* USER CODE END RTOS_QUEUES */
 }
 
