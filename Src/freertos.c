@@ -91,6 +91,7 @@ typedef struct struct_sock_t {
 struct_sock sock01;
 osThreadId processTaskHandle;
 
+volatile unsigned long ulHighFrequencyTimerTicks = 0;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -103,6 +104,28 @@ void StartDefaultTask(void const * argument);
 
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
+
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
+{
+	NVIC_SetPriority(TIM7_IRQn,0);
+	NVIC_EnableIRQ(TIM7_IRQn);
+	MX_TIM7_Init();
+	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+
+
+__weak unsigned long getRunTimeCounterValue(void)
+{
+return ulHighFrequencyTimerTicks;
+}
+/* USER CODE END 1 */
 
 /**
   * @brief  FreeRTOS initialization

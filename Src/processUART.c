@@ -46,13 +46,11 @@ void StartProcessTask(void const * argument) {
 	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 	for (;;) {
 		xQueueReceive(frames_queue, &len, portMAX_DELAY);
-
 		while (len) {
 			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 			uint8_t ch;
 			CB_Read(&inbuf_UART, &ch);
 			--len;
 		}
-
 	}
 }

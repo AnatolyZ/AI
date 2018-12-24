@@ -83,7 +83,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+extern volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,9 +102,7 @@ void MX_FREERTOS_Init(void);
  * @brief  The application entry point.
  * @retval int
  */
-int main(void)
-
-{
+int main(void) {
 	/* USER CODE BEGIN 1 */
 
 	/* USER CODE END 1 */
@@ -138,7 +136,7 @@ int main(void)
 	MX_DMA_Init();
 	MX_UART5_Init();
 	MX_TIM8_Init();
-	MX_TIM7_Init();
+	//MX_TIM7_Init();
 	MX_USART1_UART_Init();
 	/* USER CODE BEGIN 2 */
 	LogInit(&huart1);
@@ -225,6 +223,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	/* USER CODE BEGIN Callback 1 */
 	if (htim->Instance == TIM8) {
 		CommandProcess();
+	}
+	if (htim->Instance == TIM7) {
+		__HAL_TIM_SET_COUNTER(&htim7, 0x00U);
+		HAL_TIM_Base_Start_IT(&htim7);
+		ulHighFrequencyTimerTicks++;
 	}
 	/* USER CODE END Callback 1 */
 }
