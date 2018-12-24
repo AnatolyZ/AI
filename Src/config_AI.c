@@ -21,7 +21,7 @@ RESERVED02,
 RESERVED03,
 RESERVED04, };
 
-void init_FLASH_AI() {
+void FlashInit() {
 
 	uint16_t mem_key;
 	EE_ReadVariable(MEM_KEY_ADDR, &mem_key); /* Memory key reading */

@@ -8,6 +8,12 @@
 #ifndef LOG_H_
 #define LOG_H_
 
+#include "usart.h"
+#include "string.h"
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
+#include "stdlib.h"
+
 typedef enum{
 	SUB_SYS_MEMORY,
 	SUB_SYS_WEB,
@@ -21,6 +27,7 @@ typedef enum{
 	LOG_LEV_ERR,
 	LOG_LEV_WARN,
 	LOG_LEV_INFO,
+	LOG_LEV_ALL,
 	NUM_LOG_LEV
 } log_level;
 
@@ -29,9 +36,12 @@ typedef struct{
 	uint8_t levels [NUM_OF_SUB_SYS];
 } log_handler;
 
+extern log_handler hlog;
+
+
 void LogInit(UART_HandleTypeDef * log_if);
 void LogText(log_sub_sys sys, log_level level, char *msg);
-void LogNum(log_sub_sys sys, int number);
+void LogNum(log_sub_sys sys, log_level level, int number);
 void LogTextNum(log_sub_sys sys, log_level level, char *msg, int number);
 void LogSetOutputLevel(log_sub_sys sys, log_level level);
 void LogGlobalOn();

@@ -6,6 +6,7 @@
  */
 
 #include "processUART.h"
+#include "log.h"
 
 uint8_t received_byte;
 circbuff inbuf_UART;
@@ -25,10 +26,14 @@ inline void CommandProcess() {
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	CB_Write(&inbuf_UART, received_byte);
-	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
-	__HAL_TIM_SET_COUNTER(&htim8, 0x00U);
-	HAL_TIM_Base_Start_IT(&htim8);
+	if (huart == &huart5)
+	{
+		CB_Write(&inbuf_UART, received_byte);
+		HAL_UART_Receive_IT(&huart5, &received_byte, 1);
+		__HAL_TIM_SET_COUNTER(&htim8, 0x00U);
+		HAL_TIM_Base_Start_IT(&htim8);
+	}
+
 }
 
 void StartProcessTask(void const * argument) {
@@ -41,21 +46,12 @@ void StartProcessTask(void const * argument) {
 	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 	for (;;) {
 		xQueueReceive(frames_queue, &len, portMAX_DELAY);
+
 		while (len) {
 			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 			uint8_t ch;
 			CB_Read(&inbuf_UART, &ch);
-
 			--len;
-			volatile int i = 50;
-			while (i) {
-				--i;
-			}
-			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
-			i = 50;
-			while (i) {
-				--i;
-			}
 		}
 
 	}

@@ -64,6 +64,7 @@
 #include "web_server.h"
 #include "eeprom.h"
 #include "processUART.h"
+#include "log.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -176,21 +177,8 @@ void StartDefaultTask(void const * argument)
 
 	/* Infinite loop */
 	for (;;) {
-
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
-		osDelay(1999);
-
-		osDelay(1);
-		uint16_t tmp;
-		EE_ReadVariable(IP_02_01_ADDR, &tmp);
-		printf("IP_02_01: %x\n", tmp);
-		EE_ReadVariable(IP_04_03_ADDR, &tmp);
-		printf("IP_02_01: %x\n", tmp);
-		EE_ReadVariable(BR_MS_ADDR, &tmp);
-		printf("BR_MS: %x\n", tmp);
-		EE_ReadVariable(BR_LS_ADDR, &tmp);
-		printf("BR_LS: %x\n", tmp);
-
+		osDelay(1000);
+		LogTextNum(SUB_SYS_MEMORY,LOG_LEV_INFO," Current year is ",2018);
 	}
   /* USER CODE END StartDefaultTask */
 }

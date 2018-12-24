@@ -10,6 +10,6 @@
 
 #include "eeprom.h"
 
-void init_FLASH_AI();
+void FlashInit();
 
 #endif /* CONFIG_IA_H_ */
