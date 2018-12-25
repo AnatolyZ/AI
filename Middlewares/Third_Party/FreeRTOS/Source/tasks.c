@@ -417,7 +417,7 @@ PRIVILEGED_INITIALIZED_DATA static volatile UBaseType_t uxSchedulerSuspended	= (
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
 
 	PRIVILEGED_INITIALIZED_DATA static uint32_t ulTaskSwitchedInTime = 0UL;	/*< Holds the value of a timer/counter the last time a task was switched in. */
-	PRIVILEGED_INITIALIZED_DATA static uint32_t ulTotalRunTime = 0UL;		/*< Holds the total amount of execution time as defined by the run time counter clock. */
+	PRIVILEGED_INITIALIZED_DATA volatile static uint32_t ulTotalRunTime = 0UL;		/*< Holds the total amount of execution time as defined by the run time counter clock. */
 
 #endif
 

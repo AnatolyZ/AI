@@ -16,7 +16,7 @@ static uint8_t is_exp_of_2(uint32_t n)
 
 /* Circular buffer initiation function ----------------------------------- */
 
-cb_err CB_Init(circbuff *cb, uint32_t buf_size) {
+error_t CB_Init(circbuff *cb, uint32_t buf_size) {
 	if (!is_exp_of_2(buf_size)) return SIZE_ERR;
 						/* return error if buffer size is not power of 2 */
 	cb->size = buf_size;
@@ -37,7 +37,7 @@ uint32_t CB_Data_Length(circbuff *cb) {
 
 /* Write new element to buffer --------------------------------------------*/
 
-cb_err CB_Write(circbuff *cb, uint8_t item){
+error_t CB_Write(circbuff *cb, uint8_t item){
 	if (CB_Data_Length(cb) >= (cb->size - 1)){
 		return FULL_ERR;
 	}
@@ -48,7 +48,7 @@ cb_err CB_Write(circbuff *cb, uint8_t item){
 
 /* Read element from buffer -----------------------------------------------*/
 
-cb_err CB_Read(circbuff *cb, uint8_t * item){
+error_t CB_Read(circbuff *cb, uint8_t * item){
 	if (CB_Data_Length(cb) == 0){
 		return EMPTY_ERR;
 	}

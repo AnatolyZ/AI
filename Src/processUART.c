@@ -13,6 +13,8 @@ circbuff inbuf_UART;
 
 extern xQueueHandle frames_queue;
 
+profibus_MPI_t hprot;
+
 inline void CommandProcess() {
 	static portBASE_TYPE xHigherPriorityTaskWoken;
 	uint32_t len;
@@ -36,9 +38,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 }
 
+
 void StartProcessTask(void const * argument) {
-	uint32_t len;
-	cb_err err = NO_ERR;
+	uint8_t len;
+	static uint8_t cmd_data_buf[SIZE_OF_CMD_BUF];
+
+	error_t err = NO_ERR;
 	err = CB_Init(&inbuf_UART, UART_BUFF_SIZE);
 	if (err != NO_ERR) {
 		printf("Buffer allocation error");
@@ -46,11 +51,16 @@ void StartProcessTask(void const * argument) {
 	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 	for (;;) {
 		xQueueReceive(frames_queue, &len, portMAX_DELAY);
+		cmd_data_buf[SIZE_OF_CMD_BUF-1] = len;
+		uint pos = 0;
 		while (len) {
-			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 			uint8_t ch;
 			CB_Read(&inbuf_UART, &ch);
 			--len;
+			cmd_data_buf[pos++] = ch;
 		}
+		CommandParser(cmd_data_buf);
 	}
 }
+
+

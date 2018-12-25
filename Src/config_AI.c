@@ -7,6 +7,8 @@
 
 #include "config_IA.h"
 
+flash_data_t hflash;
+
 extern UART_HandleTypeDef huart5;
 
 uint16_t VirtAddVarTab[NB_OF_VAR] = {
@@ -39,15 +41,22 @@ void FlashInit() {
 	union {
 		uint32_t ui32;
 		uint16_t ui16[2];
-	} br;
+		uint8_t ui8[4];
+	} tmp_u;
 
 	/*baud rate */
-	EE_ReadVariable(BR_MS_ADDR, &br.ui16[1]);
-	EE_ReadVariable(BR_LS_ADDR, &br.ui16[0]);
-	huart5.Init.BaudRate = br.ui32;
+	EE_ReadVariable(BR_MS_ADDR, &tmp_u.ui16[1]);
+	EE_ReadVariable(BR_LS_ADDR, &tmp_u.ui16[0]);
+	huart5.Init.BaudRate = tmp_u.ui32;
+	hflash.speed = huart5.Init.BaudRate;
     /* IP-address */
-	EE_WriteVariable(IP_02_01_ADDR, DEFAULT_IP_02_01);
-	EE_WriteVariable(IP_04_03_ADDR, DEFAULT_IP_04_03);
-
+	EE_ReadVariable(IP_02_01_ADDR, &tmp_u.ui16[0]);
+	EE_ReadVariable(IP_04_03_ADDR, &tmp_u.ui16[1]);
+	hflash.IP_addr[0] = tmp_u.ui8[0];
+	hflash.IP_addr[1] = tmp_u.ui8[1];
+	hflash.IP_addr[2] = tmp_u.ui8[2];
+	hflash.IP_addr[3] = tmp_u.ui8[3];
+	/* MPI/Profibus address */
+	EE_ReadVariable(MPI_ADRR_ADDR, &hflash.own_addr);
 	/* ------------------------------------------------------- */
 }

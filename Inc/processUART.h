@@ -15,10 +15,13 @@
 #include "tim.h"
 #include "usart.h"
 #include "circbuff.h"
+#include "protocol.h"
 
 #define UART_BUFF_SIZE 256
+#define SIZE_OF_CMD_BUF 256
+
 
 void StartProcessTask(void const * argument);
-void CommandProcess();
+void CommandProcess(void);
 
 #endif /* PROCESSUART_H_ */

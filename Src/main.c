@@ -121,13 +121,9 @@ int main(void) {
 
 	/* USER CODE BEGIN SysInit */
 	HAL_FLASH_Unlock();
-	if (EE_Init() == HAL_OK) {
-		printf("EEPROM emulation init ... OK\n");
-	} else {
-		printf("EEPROM emulation init ... ERROR\n");
-	}
-
+	EE_Init();
 	FlashInit();
+	//ProtocolSettingsInit(&hprot);
 
 	/* USER CODE END SysInit */
 
