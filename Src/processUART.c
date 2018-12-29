@@ -12,6 +12,7 @@ uint8_t received_byte;
 circbuff inbuf_UART;
 
 extern xQueueHandle frames_queue;
+extern xQueueHandle cleaner_queue;
 
 profibus_MPI_t hprot;
 
@@ -27,17 +28,97 @@ inline void CommandProcess() {
 	}
 }
 
+void SendTokenMsg(uint8_t to, uint8_t from) {
+	uint8_t * temp;
+	temp = (uint8_t*) pvPortMalloc(3);
+	temp[0] = 0xDC;
+	temp[1] = to;
+	temp[2] = from;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, temp, 3);
+}
+
+void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {
+	uint8_t * temp;
+	temp = (uint8_t*) pvPortMalloc(6);
+	temp[0] = 0x10;
+	temp[1] = to;
+	temp[2] = from;
+	temp[3] = fc;
+	temp[4] = to + from + fc;
+	temp[5] = 0x16;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, temp, 6);
+}
+
+void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
+	static uint8_t req_num = 9;
+	uint8_t *msg_ptr;
+	uint8_t *tmp_ptr;
+	uint8_t msg_len = data_len + 13;
+	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
+	if (msg_ptr == NULL) {
+		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.");
+		Error_Handler();
+	}
+	tmp_ptr = msg_ptr;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = data_len + 9;
+	*tmp_ptr++ = data_len + 9;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = to | 0x80;
+	*tmp_ptr++ = from | 0x80;
+	*tmp_ptr++ = 0x7C;
+	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = 0x1F;
+	*tmp_ptr++ = 0xF1;
+	*tmp_ptr++ = req_num++;
+	memcpy(tmp_ptr, data, data_len);
+	tmp_ptr += data_len;
+	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, data_len + 7);
+	*tmp_ptr = 0x16;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
+	osDelay(4);
+	uint8_t* DC;
+	DC = (uint8_t*) pvPortMalloc(3);
+	DC[0] = 0xDC;
+	DC[1] = 0x02;
+	DC[2] = 0x01;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, DC, 3);
+	hprot.have_data_to_send = 0U;
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart == &huart5)
-	{
+	if (huart == &huart5) {
 		CB_Write(&inbuf_UART, received_byte);
 		HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 		__HAL_TIM_SET_COUNTER(&htim8, 0x00U);
 		HAL_TIM_Base_Start_IT(&htim8);
 	}
-
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	static portBASE_TYPE xHigherPriorityTaskWoken;
+	xHigherPriorityTaskWoken = pdFALSE;
+	if (huart == &huart5) {
+		TRANS_OFF();
+		xQueueSendFromISR(cleaner_queue, &(huart5.pTxBuffPtr),
+				&xHigherPriorityTaskWoken);
+		if (xHigherPriorityTaskWoken == pdTRUE) {
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+		}
+	}
+	if (huart == hlog.interface) {
+		xQueueSendFromISR(cleaner_queue, &(hlog.interface->pTxBuffPtr),
+				&xHigherPriorityTaskWoken);
+		if (xHigherPriorityTaskWoken == pdTRUE) {
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+		}
+	}
+}
 
 void StartProcessTask(void const * argument) {
 	uint8_t len;
@@ -46,12 +127,13 @@ void StartProcessTask(void const * argument) {
 	error_t err = NO_ERR;
 	err = CB_Init(&inbuf_UART, UART_BUFF_SIZE);
 	if (err != NO_ERR) {
-		printf("Buffer allocation error");
+		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Circular buffer allocation error.\r\n");
 	}
 	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 	for (;;) {
 		xQueueReceive(frames_queue, &len, portMAX_DELAY);
-		cmd_data_buf[SIZE_OF_CMD_BUF-1] = len;
+		cmd_data_buf[SIZE_OF_CMD_BUF - 1] = len;
 		uint pos = 0;
 		while (len) {
 			uint8_t ch;
@@ -62,5 +144,4 @@ void StartProcessTask(void const * argument) {
 		CommandParser(cmd_data_buf);
 	}
 }
-
 

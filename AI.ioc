@@ -1,6 +1,17 @@
 #MicroXplorer Configuration settings - do not modify
 Dma.Request0=USART1_TX
-Dma.RequestsNb=1
+Dma.Request1=UART5_TX
+Dma.RequestsNb=2
+Dma.UART5_TX.1.Direction=DMA_MEMORY_TO_PERIPH
+Dma.UART5_TX.1.FIFOMode=DMA_FIFOMODE_DISABLE
+Dma.UART5_TX.1.Instance=DMA1_Stream7
+Dma.UART5_TX.1.MemDataAlignment=DMA_MDATAALIGN_BYTE
+Dma.UART5_TX.1.MemInc=DMA_MINC_ENABLE
+Dma.UART5_TX.1.Mode=DMA_NORMAL
+Dma.UART5_TX.1.PeriphDataAlignment=DMA_PDATAALIGN_BYTE
+Dma.UART5_TX.1.PeriphInc=DMA_PINC_DISABLE
+Dma.UART5_TX.1.Priority=DMA_PRIORITY_LOW
+Dma.UART5_TX.1.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority,FIFOMode
 Dma.USART1_TX.0.Direction=DMA_MEMORY_TO_PERIPH
 Dma.USART1_TX.0.FIFOMode=DMA_FIFOMODE_DISABLE
 Dma.USART1_TX.0.Instance=DMA2_Stream7
@@ -100,6 +111,7 @@ Mcu.UserName=STM32F407VETx
 MxCube.Version=5.0.0
 MxDb.Version=DB.5.0.0
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false
+NVIC.DMA1_Stream7_IRQn=true\:5\:0\:false\:false\:true\:true\:false
 NVIC.DMA2_Stream7_IRQn=true\:5\:0\:false\:false\:true\:true\:false
 NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.ETH_IRQn=true\:5\:0\:false\:false\:true\:true\:false

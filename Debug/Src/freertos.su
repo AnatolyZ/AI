@@ -1,6 +1,7 @@
 core_cm4.h:1626:22:NVIC_EnableIRQ	16	static
 core_cm4.h:1698:22:NVIC_SetPriority	16	static
-freertos.c:114:13:configureTimerForRunTimeStats	8	static
-freertos.c:124:22:getRunTimeCounterValue	4	static
-freertos.c:135:6:MX_FREERTOS_Init	56	static
-freertos.c:176:6:StartDefaultTask	32	static
+freertos.c:116:13:configureTimerForRunTimeStats	8	static
+freertos.c:123:22:getRunTimeCounterValue	4	static
+freertos.c:133:6:MX_FREERTOS_Init	80	static
+freertos.c:178:6:StartDefaultTask	88	static
+freertos.c:225:6:StartHeapCleanerTask	24	static

@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
@@ -70,6 +70,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 xQueueHandle frames_queue;
+xQueueHandle cleaner_queue;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -90,6 +91,7 @@ typedef struct struct_sock_t {
 } struct_sock;
 struct_sock sock01;
 osThreadId processTaskHandle;
+osThreadId heapCleanerHandle;
 
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
 /* USER CODE END Variables */
@@ -97,7 +99,7 @@ osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void StartHeapCleanerTask(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -111,59 +113,59 @@ unsigned long getRunTimeCounterValue(void);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
-__weak void configureTimerForRunTimeStats(void)
-{
-	NVIC_SetPriority(TIM7_IRQn,0);
+__weak void configureTimerForRunTimeStats(void) {
+	NVIC_SetPriority(TIM7_IRQn, 0);
 	NVIC_EnableIRQ(TIM7_IRQn);
 	MX_TIM7_Init();
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-
-
-__weak unsigned long getRunTimeCounterValue(void)
-{
-return ulHighFrequencyTimerTicks;
+__weak unsigned long getRunTimeCounterValue(void) {
+	return ulHighFrequencyTimerTicks;
 }
 /* USER CODE END 1 */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
 void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
 
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
 	osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 1024);
 	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
-  /* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityLow, 0, 256);
+	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
+	/* USER CODE END RTOS_TIMERS */
 
-  /* USER CODE BEGIN RTOS_THREADS */
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* USER CODE END RTOS_THREADS */
+	/* USER CODE BEGIN RTOS_THREADS */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+	/* USER CODE END RTOS_THREADS */
+
+	/* USER CODE BEGIN RTOS_QUEUES */
 	frames_queue = xQueueCreate(16, sizeof(uint16_t));
-  /* USER CODE END RTOS_QUEUES */
+	cleaner_queue = xQueueCreate(16, sizeof(uint8_t*));
+	/* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -173,12 +175,11 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for LWIP */
-  MX_LWIP_Init();
+void StartDefaultTask(void const * argument) {
+	/* init code for LWIP */
+	MX_LWIP_Init();
 
-  /* USER CODE BEGIN StartDefaultTask */
+	/* USER CODE BEGIN StartDefaultTask */
 	printf("lwIP init completed.\n");
 	struct netconn *conn;
 	err_t err;
@@ -198,17 +199,36 @@ void StartDefaultTask(void const * argument)
 		}
 	}
 
+	uint8_t data[] = { 0x32, 0x01, 0x00, 0x00, 0x05, 0x00, 0x00, 0x1A, 0x00,
+			0x04, 0x02, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x82, 0x00,
+			0x00, 0x00, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x81,
+			0x00, 0x00, 0x00 };
+	uint8_t * request_data;
+	request_data = (uint8_t*) pvPortMalloc(sizeof(data));
+	memcpy(request_data, data, sizeof(data));
+	hprot.data_len = sizeof(data);
+	hprot.data_ptr = request_data;
 	/* Infinite loop */
 	for (;;) {
-		osDelay(1000);
-		LogTextNum(SUB_SYS_MEMORY,LOG_LEV_INFO," Current year is ",2018);
+		osDelay(5000);
+		LogText(SUB_SYS_LOG, LOG_LEV_INFO, "Test data is sent \r\n");
+
+		hprot.have_data_to_send = 1U;
+		osDelay(30000);
 	}
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 //---------------------------------------------------------------
+void StartHeapCleanerTask(void const * argument) {
+	uint8_t * heap_ptr;
+	for (;;) {
+		xQueueReceive(cleaner_queue, &heap_ptr, portMAX_DELAY);
+		vPortFree(heap_ptr);
+	}
+}
 //---------------------------------------------------------------
 /* USER CODE END Application */
 

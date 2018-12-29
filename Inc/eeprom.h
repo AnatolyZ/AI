@@ -105,7 +105,7 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-#define 		MEMORY_KEY			0xBEAF   /* Key for default memory initiation */
+#define 		MEMORY_KEY			0xBEAB   /* Key for default memory initiation */
 #define			DEFAULT_IP_02_01	0xA8C0   /* 192.168.004.253 - default IP */
 #define			DEFAULT_IP_04_03	0xFD04   /* 111.222.333.444 - template */
 #define			DEFAULT_BR_MS		0x0002   /*------------*/

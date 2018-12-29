@@ -14,15 +14,22 @@
 #include "cmsis_os.h"
 #include "stdlib.h"
 
-typedef enum{
+#ifdef LOG_ON
+#define LogText(sys, level, msg) LogText__((sys), (level), (msg))
+#else
+#define LogText(sys, level, msg)
+#endif /* LOG_ON */
+
+typedef enum {
 	SUB_SYS_MEMORY,
 	SUB_SYS_WEB,
 	SUB_SYS_RS458,
 	SUB_SYS_TCP,
+	SUB_SYS_LOG,
 	NUM_OF_SUB_SYS
 } log_sub_sys;
 
-typedef enum{
+typedef enum {
 	LOG_LEV_OFF,
 	LOG_LEV_ERR,
 	LOG_LEV_WARN,
@@ -31,16 +38,15 @@ typedef enum{
 	NUM_LOG_LEV
 } log_level;
 
-typedef struct{
+typedef struct {
 	UART_HandleTypeDef *interface;
-	uint8_t levels [NUM_OF_SUB_SYS];
+	uint8_t levels[NUM_OF_SUB_SYS];
 } log_handler;
 
 extern log_handler hlog;
 
-
 void LogInit(UART_HandleTypeDef * log_if);
-void LogText(log_sub_sys sys, log_level level, char *msg);
+void LogText__(log_sub_sys sys, log_level level, char *msg);
 void LogNum(log_sub_sys sys, log_level level, int number);
 void LogTextNum(log_sub_sys sys, log_level level, char *msg, int number);
 void LogSetOutputLevel(log_sub_sys sys, log_level level);

@@ -11,7 +11,7 @@ log_handler hlog;
 
 static char* txt_lev[NUM_LOG_LEV - 1] = { "OFF", "ERR", "WAR", "INF", };
 
-static char* txt_sys[NUM_OF_SUB_SYS] = { "MEM", "WEB", "458", "TCP", };
+static char* txt_sys[NUM_OF_SUB_SYS] = { "MEM", "WEB", "458", "TCP", "LOG" };
 
 void LogInit(UART_HandleTypeDef * log_if) {
 	hlog.interface = log_if;
@@ -20,9 +20,11 @@ void LogInit(UART_HandleTypeDef * log_if) {
 	}
 }
 
-void LogText(log_sub_sys sys, log_level level, char *msg) {
-	if (level <= hlog.levels[sys]
-			&& hlog.interface->gState == HAL_UART_STATE_READY) {
+void LogText__(log_sub_sys sys, log_level level, char *msg) {
+	if (level <= hlog.levels[sys]) {
+		while (hlog.interface->gState != HAL_UART_STATE_READY) {
+			osDelay(1);
+		}
 		uint len = 0;
 		char * ptr = msg;
 		while (*ptr++) {
@@ -36,14 +38,16 @@ void LogText(log_sub_sys sys, log_level level, char *msg) {
 			strcpy(ptr + 7, ":");
 			strcpy(ptr + 8, msg);
 			HAL_UART_Transmit_DMA(hlog.interface, (uint8_t*) ptr, len + 8);
-			vPortFree(ptr);
+
 		}
 	}
 }
 
 void LogNum(log_sub_sys sys, log_level level, int number) {
-	if (level <= hlog.levels[sys]
-			&& hlog.interface->gState == HAL_UART_STATE_READY) {
+	if (level <= hlog.levels[sys]) {
+		while (hlog.interface->gState != HAL_UART_STATE_READY) {
+			osDelay(1);
+		}
 		uint len = 0;
 		char * ptr;
 		ptr = (char*) pvPortMalloc(30);
@@ -59,14 +63,16 @@ void LogNum(log_sub_sys sys, log_level level, int number) {
 			ptr -= len + 1;
 			strcpy(ptr + len, "\r\n");
 			HAL_UART_Transmit_DMA(hlog.interface, (uint8_t*) ptr, len + 2);
-			vPortFree(ptr);
+
 		}
 	}
 }
 
 void LogTextNum(log_sub_sys sys, log_level level, char *msg, int number) {
-	if (level <= hlog.levels[sys]
-			&& hlog.interface->gState == HAL_UART_STATE_READY) {
+	if (level <= hlog.levels[sys]) {
+		while (hlog.interface->gState != HAL_UART_STATE_READY) {
+			osDelay(1);
+		}
 		uint len = 0;
 		uint msg_len = 0;
 		char * ptr = msg;
@@ -88,7 +94,6 @@ void LogTextNum(log_sub_sys sys, log_level level, char *msg, int number) {
 			ptr -= len + 1;
 			strcpy(ptr + len, "\r\n");
 			HAL_UART_Transmit_DMA(hlog.interface, (uint8_t*) ptr, len + 2);
-			vPortFree(ptr);
 		}
 	}
 }
