@@ -1,7 +1,7 @@
 ethernetif.c:115:6:HAL_ETH_MspInit	48	static
 ethernetif.c:168:6:HAL_ETH_MspDeInit	16	static
 ethernetif.c:210:6:HAL_ETH_RxCpltCallback	16	static
-ethernetif.c:229:13:low_level_init	56	static
+ethernetif.c:229:13:low_level_init	72	static
 ethernetif.c:333:14:low_level_output	48	static
 ethernetif.c:417:22:low_level_input	56	static
 ethernetif.c:506:6:ethernetif_input	24	static

@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -235,7 +235,7 @@ static void low_level_init(struct netif *netif)
    uint8_t MACAddr[6] ;
   heth.Instance = ETH;
   heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
-  heth.Init.PhyAddress = DP83848I_PHY_ADDRESS;
+  heth.Init.PhyAddress = DP83848_PHY_ADDRESS;
   MACAddr[0] = 0x00;
   MACAddr[1] = 0x02;
   MACAddr[2] = 0xA2;

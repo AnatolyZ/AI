@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
@@ -71,6 +71,7 @@
 /* USER CODE BEGIN PTD */
 xQueueHandle frames_queue;
 xQueueHandle cleaner_queue;
+volatile size_t heap_size;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -107,6 +108,9 @@ void StartDefaultTask(void const * argument);
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
+/* GetIdleTaskMemory prototype (linked to static allocation support) */
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
@@ -125,47 +129,60 @@ __weak unsigned long getRunTimeCounterValue(void) {
 }
 /* USER CODE END 1 */
 
+/* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
+static StaticTask_t xIdleTaskTCBBuffer;
+static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+  
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
+{
+  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  /* place for user code */
+}                   
+/* USER CODE END GET_IDLE_TASK_MEMORY */
+
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
 
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
 	osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 1024);
 	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
 
-	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityLow, 0, 256);
+	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0, 256);
 	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* Create the thread(s) */
-	/* definition and creation of defaultTask */
-	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-	/* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
 
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
 	frames_queue = xQueueCreate(16, sizeof(uint16_t));
 	cleaner_queue = xQueueCreate(16, sizeof(uint8_t*));
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -175,11 +192,15 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument) {
-	/* init code for LWIP */
-	MX_LWIP_Init();
+void StartDefaultTask(void const * argument)
+{
+  /* init code for LWIP */
+  MX_LWIP_Init();
 
-	/* USER CODE BEGIN StartDefaultTask */
+  /* USER CODE BEGIN StartDefaultTask */
+
+
+
 	printf("lwIP init completed.\n");
 	struct netconn *conn;
 	err_t err;
@@ -188,8 +209,10 @@ void StartDefaultTask(void const * argument) {
 		err = netconn_bind(conn, IP_ADDR_ANY, 80);
 		if (err == ERR_OK) {
 			netconn_listen(conn);
+			heap_size = xPortGetFreeHeapSize();
 			sys_thread_new("web_server_thread", web_server_thread, (void*) conn,
-			DEFAULT_THREAD_STACKSIZE / 4, osPriorityAboveNormal);
+			DEFAULT_THREAD_STACKSIZE / 8, osPriorityAboveNormal);
+			heap_size = xPortGetFreeHeapSize();
 			printf("Binding ... OK\n");
 			osDelay(1);
 		} else {
@@ -208,15 +231,26 @@ void StartDefaultTask(void const * argument) {
 	memcpy(request_data, data, sizeof(data));
 	hprot.data_len = sizeof(data);
 	hprot.data_ptr = request_data;
+
+	HAL_GPIO_WritePin(GPIOE,GPIO_PIN_9,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOE,GPIO_PIN_10,GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
+
+		/*
 		osDelay(5000);
 		LogText(SUB_SYS_LOG, LOG_LEV_INFO, "Test data is sent \r\n");
 
 		hprot.have_data_to_send = 1U;
 		osDelay(30000);
+		*/
+		osDelay(100);
+		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_9);
+		osDelay(20);
+		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_10);
+		heap_size = xPortGetFreeHeapSize();
 	}
-	/* USER CODE END StartDefaultTask */
+  /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -226,7 +260,8 @@ void StartHeapCleanerTask(void const * argument) {
 	uint8_t * heap_ptr;
 	for (;;) {
 		xQueueReceive(cleaner_queue, &heap_ptr, portMAX_DELAY);
-		vPortFree(heap_ptr);
+		vPortFree((uint8_t *)heap_ptr);
+		heap_ptr = NULL;
 	}
 }
 //---------------------------------------------------------------

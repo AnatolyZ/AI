@@ -1,3 +1,4 @@
+event_groups.c:135:21:xEventGroupCreateStatic	24	static
 event_groups.c:174:21:xEventGroupCreate	16	static
 event_groups.c:208:13:xEventGroupSync	56	static
 event_groups.c:324:13:xEventGroupWaitBits	72	static

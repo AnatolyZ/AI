@@ -31,6 +31,9 @@ inline void CommandProcess() {
 void SendTokenMsg(uint8_t to, uint8_t from) {
 	uint8_t * temp;
 	temp = (uint8_t*) pvPortMalloc(3);
+	if (temp == NULL) {
+		Error_Handler();
+	}
 	temp[0] = 0xDC;
 	temp[1] = to;
 	temp[2] = from;
@@ -41,6 +44,9 @@ void SendTokenMsg(uint8_t to, uint8_t from) {
 void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {
 	uint8_t * temp;
 	temp = (uint8_t*) pvPortMalloc(6);
+	if (temp == NULL) {
+		Error_Handler();
+	}
 	temp[0] = 0x10;
 	temp[1] = to;
 	temp[2] = from;
@@ -110,8 +116,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 		if (xHigherPriorityTaskWoken == pdTRUE) {
 			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 		}
-	}
-	if (huart == hlog.interface) {
+	} else if (huart == hlog.interface) {
 		xQueueSendFromISR(cleaner_queue, &(hlog.interface->pTxBuffPtr),
 				&xHigherPriorityTaskWoken);
 		if (xHigherPriorityTaskWoken == pdTRUE) {

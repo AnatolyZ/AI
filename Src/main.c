@@ -136,7 +136,7 @@ int main(void)
   MX_TIM7_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	LogInit(&huart1);
+  LogInit(&huart1);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
