@@ -1,4 +1,3 @@
-api_msg.c:166:1:recv_udp	40	static
 api_msg.c:243:1:recv_tcp	40	static
 api_msg.c:307:1:poll_tcp	24	static
 api_msg.c:348:1:sent_tcp	32	static

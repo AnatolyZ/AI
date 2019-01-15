@@ -28,8 +28,16 @@ inline void CommandProcess() {
 	}
 }
 
+void SendAckMsg(void) {
+	uint8_t * temp;
+	temp = (uint8_t*) pvPortMalloc(1);
+	*temp = 0xE5;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, temp, 1);
+}
 void SendTokenMsg(uint8_t to, uint8_t from) {
 	uint8_t * temp;
+	static int cnt = 100;
 	temp = (uint8_t*) pvPortMalloc(3);
 	if (temp == NULL) {
 		Error_Handler();
@@ -37,6 +45,11 @@ void SendTokenMsg(uint8_t to, uint8_t from) {
 	temp[0] = 0xDC;
 	temp[1] = to;
 	temp[2] = from;
+	cnt--;
+	if (cnt == 0) {
+		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);
+		cnt = 10;
+	}
 	TRANS_ON();
 	HAL_UART_Transmit_DMA(&huart5, temp, 3);
 }
@@ -58,10 +71,10 @@ void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {
 }
 
 void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
-	static uint8_t req_num = 9;
+	static uint8_t req_num = 0;
 	uint8_t *msg_ptr;
 	uint8_t *tmp_ptr;
-	uint8_t msg_len = data_len + 13;
+	uint8_t msg_len = data_len + 14;
 	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
 	if (msg_ptr == NULL) {
 		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
@@ -70,30 +83,34 @@ void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
 	}
 	tmp_ptr = msg_ptr;
 	*tmp_ptr++ = 0x68;
-	*tmp_ptr++ = data_len + 9;
-	*tmp_ptr++ = data_len + 9;
+	*tmp_ptr++ = data_len + 8;
+	*tmp_ptr++ = data_len + 8;
 	*tmp_ptr++ = 0x68;
 	*tmp_ptr++ = to | 0x80;
 	*tmp_ptr++ = from | 0x80;
-	*tmp_ptr++ = 0x7C;
-	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = 0x6D;
+	*tmp_ptr++ = 0x00;
 	*tmp_ptr++ = 0x1F;
-	*tmp_ptr++ = 0xF1;
+	*tmp_ptr++ = 0xE0;
+	*tmp_ptr++ = 0x04;
 	*tmp_ptr++ = req_num++;
 	memcpy(tmp_ptr, data, data_len);
 	tmp_ptr += data_len;
-	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, data_len + 7);
+	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, data_len + 8);
 	*tmp_ptr = 0x16;
 	TRANS_ON();
 	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
-	osDelay(4);
-	uint8_t* DC;
-	DC = (uint8_t*) pvPortMalloc(3);
-	DC[0] = 0xDC;
-	DC[1] = 0x02;
-	DC[2] = 0x01;
-	TRANS_ON();
-	HAL_UART_Transmit_DMA(&huart5, DC, 3);
+	/*
+	 osDelay(4);
+	 uint8_t* DC;
+	 DC = (uint8_t*) pvPortMalloc(3);
+	 DC[0] = 0xDC;
+	 DC[1] = 0x02;
+	 DC[2] = 0x01;
+	 TRANS_ON();
+	 HAL_UART_Transmit_DMA(&huart5, DC, 3);
+	 */
+	hprot.is_connected = 1U;
 	hprot.have_data_to_send = 0U;
 }
 

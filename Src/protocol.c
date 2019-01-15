@@ -12,6 +12,7 @@ void ProtocolSettingsInit(profibus_MPI_t* hp) {
 	hp->speed = hflash.speed;
 	hp->token_possession = 0U;
 	hp->have_data_to_send = 0U;
+	hp->is_connected = 0U;
 	hp->wait_for_answer = 0U;
 	hp->data_ptr = NULL;
 	hp->data_len = 0U;
@@ -31,7 +32,8 @@ static inline error_t TokenCmdProcessing(telegram_t * tel) {
 		hprot.token_possession = 0U;
 	} else {
 		hprot.token_possession = 1U;
-		SendRequestMsg(tel->SA,hprot.own_address,hprot.data_ptr,hprot.data_len);
+		SendRequestMsg(tel->SA, hprot.own_address, hprot.data_ptr,
+				hprot.data_len);
 		hprot.have_data_to_send = 0U;
 	}
 
@@ -47,6 +49,9 @@ static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 
 static inline error_t VarDataCmdProcessing(telegram_t * tel) {
 
+	if (tel->UK1 == 0xD0) {
+		SendAckMsg();
+	}
 	if (tel->PDU != NULL) {
 		vPortFree(tel->PDU);
 		tel->PDU = NULL;
@@ -114,6 +119,15 @@ error_t CommandParser(uint8_t *buf) {
 			htel.RN = *buf++;
 			htel.FCS = *buf++;
 			htel.ED = *buf;
+		} else if (htel.UK1 == 0xD0) {
+			htel.UK2 = *buf++;
+			htel.RN = *buf++;
+			uint pdu_size = htel.LE - 8;
+			htel.PDU = (uint8_t*) pvPortMalloc(pdu_size);
+			memcpy(htel.PDU, buf, pdu_size);
+			buf += pdu_size;
+			htel.FCS = *buf++;
+			htel.ED = *buf;
 		} else {
 			htel.RN = *buf++;
 			uint pdu_size = htel.LE - 7;
@@ -127,6 +141,10 @@ error_t CommandParser(uint8_t *buf) {
 		break;
 	case 0xA2:
 		/* Fixed length data */
+		break;
+	case 0xE5:
+		/* Acknowledgment */
+		return TokenCmdProcessing(&htel);
 		break;
 	default:
 		return UNKNOWN_SD_ERR;

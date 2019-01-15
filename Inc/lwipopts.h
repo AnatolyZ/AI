@@ -77,8 +77,10 @@
 
 /* LwIP Stack Parameters (modified compared to initialization value in opt.h) -*/
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
+/*----- Default Value for LWIP_UDP: 1 ---*/
+#define LWIP_UDP 0
 /*----- Default Value for MEMP_NUM_TCP_PCB: 5 ---*/
-#define MEMP_NUM_TCP_PCB 8
+#define MEMP_NUM_TCP_PCB 16
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
 /*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
@@ -113,8 +115,6 @@
 #define DEFAULT_THREAD_STACKSIZE 2048
 /*----- Value in opt.h for DEFAULT_THREAD_PRIO: 1 -----*/
 #define DEFAULT_THREAD_PRIO 3
-/*----- Value in opt.h for DEFAULT_UDP_RECVMBOX_SIZE: 0 -----*/
-#define DEFAULT_UDP_RECVMBOX_SIZE 6
 /*----- Value in opt.h for DEFAULT_TCP_RECVMBOX_SIZE: 0 -----*/
 #define DEFAULT_TCP_RECVMBOX_SIZE 6
 /*----- Value in opt.h for DEFAULT_ACCEPTMBOX_SIZE: 0 -----*/

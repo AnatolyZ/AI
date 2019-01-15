@@ -85,7 +85,7 @@ static void form_data_parser(char * in_buf) {
 	}
 }
 
-void web_server_thread(void *arg) {
+void Web_thread(void *arg) {
 	err_t err, recv_err;
 	struct netbuf *inbuf;
 	struct netconn *newconn;
@@ -95,7 +95,6 @@ void web_server_thread(void *arg) {
 	char* buf;
 	struct fs_file file;
 
-	printf("Net task created.\n");
 	osDelay(1);
 	for (;;) {
 		err = netconn_accept(arg_conn, &newconn);
@@ -117,6 +116,7 @@ void web_server_thread(void *arg) {
 							fs_close(&file);
 						} else if (strncmp((char const *) buf, "img/logo.png",
 								12) == 0) {
+							hprot.have_data_to_send = 1U;
 							fs_open(&file, "/img/logo.png");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),

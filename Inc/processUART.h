@@ -23,7 +23,7 @@
 #define TRANS_ON() 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0,GPIO_PIN_SET)
 #define TRANS_OFF() 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0,GPIO_PIN_RESET)
 
-
+void SendAckMsg(void);
 void SendTokenMsg(uint8_t to,uint8_t from);
 void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc);
 void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len);

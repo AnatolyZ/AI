@@ -36,6 +36,7 @@ typedef struct {
 	uint8_t own_address; /* Device bus address */
 	volatile uint8_t token_possession; /* Has or not token, if "must_answer" = 0 give token back */
 	volatile uint8_t have_data_to_send; /* Must send an answer */
+	volatile uint8_t is_connected; /* Connection is established */
 	uint8_t wait_for_answer; /* Request was sent, waiting for answer */
 	uint32_t speed; /* Baud rate */
 	uint8_t* data_ptr; /* Pointer to data to send */

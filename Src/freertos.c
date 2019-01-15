@@ -49,6 +49,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <tcp_client.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -71,7 +72,6 @@
 /* USER CODE BEGIN PTD */
 xQueueHandle frames_queue;
 xQueueHandle cleaner_queue;
-volatile size_t heap_size;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -97,6 +97,7 @@ osThreadId heapCleanerHandle;
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
+osTimerId myTimer01Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -104,12 +105,16 @@ void StartHeapCleanerTask(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
+void Callback01(void const * argument);
 
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+
+/* GetTimerTaskMemory prototype (linked to static allocation support) */
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
 
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
@@ -132,15 +137,28 @@ __weak unsigned long getRunTimeCounterValue(void) {
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
 static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
+		StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
+	*ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+	*ppxIdleTaskStackBuffer = &xIdleStack[0];
+	*pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+	/* place for user code */
+}
+/* USER CODE END GET_IDLE_TASK_MEMORY */
+
+/* USER CODE BEGIN GET_TIMER_TASK_MEMORY */
+static StaticTask_t xTimerTaskTCBBuffer;
+static StackType_t xTimerStack[configTIMER_TASK_STACK_DEPTH];
   
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize )  
 {
-  *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
-  *ppxIdleTaskStackBuffer = &xIdleStack[0];
-  *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  *ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
+  *ppxTimerTaskStackBuffer = &xTimerStack[0];
+  *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
   /* place for user code */
 }                   
-/* USER CODE END GET_IDLE_TASK_MEMORY */
+/* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
   * @brief  FreeRTOS initialization
@@ -161,12 +179,18 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of myTimer01 */
+  osTimerDef(myTimer01, Callback01);
+  myTimer01Handle = osTimerCreate(osTimer(myTimer01), osTimerOnce, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
 	osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 1024);
 	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
 
-	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0, 256);
+	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0,
+			256);
 	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
   /* USER CODE END RTOS_TIMERS */
 
@@ -199,58 +223,70 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
 
-
-
-	printf("lwIP init completed.\n");
-	struct netconn *conn;
+	struct netconn *conn_port80;
 	err_t err;
-	conn = netconn_new(NETCONN_TCP);
-	if (conn != NULL) {
-		err = netconn_bind(conn, IP_ADDR_ANY, 80);
+	conn_port80 = netconn_new(NETCONN_TCP);
+	if (conn_port80 != NULL) {
+		err = netconn_bind(conn_port80, IP_ADDR_ANY, 80);
 		if (err == ERR_OK) {
-			netconn_listen(conn);
-			heap_size = xPortGetFreeHeapSize();
-			sys_thread_new("web_server_thread", web_server_thread, (void*) conn,
-			DEFAULT_THREAD_STACKSIZE / 8, osPriorityAboveNormal);
-			heap_size = xPortGetFreeHeapSize();
-			printf("Binding ... OK\n");
-			osDelay(1);
+			netconn_listen(conn_port80);
+			sys_thread_new("web_thread", Web_thread, (void*) conn_port80,
+			DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
 		} else {
-			netconn_delete(conn);
-			printf("Binding ... Err\n");
-			osDelay(1);
+			netconn_delete(conn_port80);
 		}
 	}
 
-	uint8_t data[] = { 0x32, 0x01, 0x00, 0x00, 0x05, 0x00, 0x00, 0x1A, 0x00,
-			0x04, 0x02, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x82, 0x00,
-			0x00, 0x00, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x81,
-			0x00, 0x00, 0x00 };
-	uint8_t * request_data;
-	request_data = (uint8_t*) pvPortMalloc(sizeof(data));
-	memcpy(request_data, data, sizeof(data));
-	hprot.data_len = sizeof(data);
-	hprot.data_ptr = request_data;
+	struct netconn *conn_port102;
+	conn_port102 = netconn_new(NETCONN_TCP);
+	if (conn_port102 != NULL) {
+		err = netconn_bind(conn_port102, IP_ADDR_ANY, 102);
+		if (err == ERR_OK) {
+			netconn_listen(conn_port102);
+			sys_thread_new("tcp_serv_thread", Serv_thread, (void*) conn_port102,
+			DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
+		} else {
+			netconn_delete(conn_port102);
+		}
+	}
 
-	HAL_GPIO_WritePin(GPIOE,GPIO_PIN_9,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOE,GPIO_PIN_10,GPIO_PIN_RESET);
+
+	/*
+	 uint8_t data[] = { 0x32, 0x01, 0x00, 0x00, 0x05, 0x00, 0x00, 0x1A, 0x00,
+	 0x04, 0x02, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x82, 0x00,
+	 0x00, 0x00, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x81,
+	 0x00, 0x00, 0x00 };
+	 */
+	uint8_t data_conn1[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01, 0x00 };
+	uint8_t * request_data;
+	request_data = (uint8_t*) pvPortMalloc(sizeof(data_conn1));
+	memcpy(request_data, data_conn1, sizeof(data_conn1));
+	hprot.data_len = sizeof(data_conn1);
+	hprot.data_ptr = request_data;
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
 
 		/*
-		osDelay(5000);
-		LogText(SUB_SYS_LOG, LOG_LEV_INFO, "Test data is sent \r\n");
+		 osDelay(5000);
+		 LogText(SUB_SYS_LOG, LOG_LEV_INFO, "Test data is sent \r\n");
+		 hprot.have_data_to_send = 1U;
+		 osDelay(30000);
+		 */
 
-		hprot.have_data_to_send = 1U;
-		osDelay(30000);
-		*/
-		osDelay(100);
-		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_9);
-		osDelay(20);
-		HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_10);
-		heap_size = xPortGetFreeHeapSize();
+		osDelay(300);
+		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 	}
   /* USER CODE END StartDefaultTask */
+}
+
+/* Callback01 function */
+__weak void Callback01(void const * argument)
+{
+  /* USER CODE BEGIN Callback01 */
+  
+  /* USER CODE END Callback01 */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -260,7 +296,7 @@ void StartHeapCleanerTask(void const * argument) {
 	uint8_t * heap_ptr;
 	for (;;) {
 		xQueueReceive(cleaner_queue, &heap_ptr, portMAX_DELAY);
-		vPortFree((uint8_t *)heap_ptr);
+		vPortFree((uint8_t *) heap_ptr);
 		heap_ptr = NULL;
 	}
 }

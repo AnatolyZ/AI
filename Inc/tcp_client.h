@@ -1,13 +1,12 @@
 /*
- * web_server.h
+ * tcp_server.h
  *
- *  Created on: 10 дек. 2018 г.
+ *  Created on: 11 янв. 2019 г.
  *      Author: AZharkov
  */
 
-#ifndef WEB_SERVER_H_
-#define WEB_SERVER_H_
-
+#ifndef TCP_CLIENT_H_
+#define TCP_CLIENT_H_
 
 #include "lwip/opt.h"
 #include "lwip/arch.h"
@@ -17,10 +16,9 @@
 #include "lwip.h"
 #include "eeprom.h"
 #include "protocol.h"
+#include "log.h"
+
+void Serv_thread(void *arg);
 
 
-void Web_thread(void *arg);
-
-
-
-#endif /* WEB_SERVER_H_ */
+#endif /* TCP_CLIENT_H_ */
