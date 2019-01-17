@@ -25,7 +25,6 @@ tasks.c:2499:12:xTaskIncrementTick	32	static
 tasks.c:2761:6:vTaskSwitchContext	32	static
 tasks.c:2820:6:vTaskPlaceOnEventList	24	static
 tasks.c:2837:6:vTaskPlaceOnUnorderedEventList	32	static
-tasks.c:2863:7:vTaskPlaceOnEventListRestricted	32	static
 tasks.c:2894:12:xTaskRemoveFromEventList	32	static
 tasks.c:2962:12:xTaskRemoveFromUnorderedEventList	32	static
 tasks.c:3007:6:vTaskSetTimeOutState	24	static

@@ -28,4 +28,3 @@ queue.c:1974:12:xQueueIsQueueFullFromISR	24	static
 queue.c:2269:7:vQueueAddToRegistry	24	static
 queue.c:2298:14:pcQueueGetName	24	static
 queue.c:2326:7:vQueueUnregisterQueue	24	static
-queue.c:2358:7:vQueueWaitForMessageRestricted	32	static

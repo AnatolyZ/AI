@@ -35,6 +35,45 @@ void SendAckMsg(void) {
 	TRANS_ON();
 	HAL_UART_Transmit_DMA(&huart5, temp, 1);
 }
+
+void SendConfirmMsg(uint8_t to, uint8_t from, uint8_t size, uint8_t func) {
+	uint8_t *msg_ptr;
+	uint8_t *tmp_ptr;
+	uint8_t msg_len = size + 6;
+	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
+	if (msg_ptr == NULL) {
+		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.");
+		Error_Handler();
+	}
+	tmp_ptr = msg_ptr;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = size;
+	*tmp_ptr++ = size;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = to | 0x80;
+	*tmp_ptr++ = from | 0x80;
+	*tmp_ptr++ = func;
+	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = 0x1F;
+	if (size == 0x07) {
+		*tmp_ptr++ = 0x05;
+		*tmp_ptr++ = 0x07;
+	} else {
+		*tmp_ptr++ = 0xB0;
+		*tmp_ptr++ = 0x07;
+		*tmp_ptr++ = hprot.req_num++;
+		if (hprot.req_num == 0) {
+			hprot.req_num++;
+		}
+	}
+	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, size);
+	*tmp_ptr = 0x16;
+	hprot.confirm_status = CONF_SENT;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
+}
+
 void SendTokenMsg(uint8_t to, uint8_t from) {
 	uint8_t * temp;
 	static int cnt = 100;
@@ -51,7 +90,10 @@ void SendTokenMsg(uint8_t to, uint8_t from) {
 		cnt = 10;
 	}
 	TRANS_ON();
-	HAL_UART_Transmit_DMA(&huart5, temp, 3);
+	if (HAL_UART_Transmit_DMA(&huart5, temp, 3) == HAL_BUSY){
+		TRANS_OFF();
+		vPortFree(temp);
+	}
 }
 
 void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {
@@ -71,7 +113,38 @@ void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {
 }
 
 void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
-	static uint8_t req_num = 0;
+	uint8_t *msg_ptr;
+	uint8_t *tmp_ptr;
+	uint8_t msg_len = data_len + 13;
+	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
+	if (msg_ptr == NULL) {
+		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.");
+		Error_Handler();
+	}
+	tmp_ptr = msg_ptr;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = data_len + 7;
+	*tmp_ptr++ = data_len + 7;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = to | 0x80;
+	*tmp_ptr++ = from | 0x80;
+	*tmp_ptr++ = 0x7C;
+	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = 0x1F;
+	*tmp_ptr++ = 0xF1;
+	*tmp_ptr++ = hprot.req_num;
+	memcpy(tmp_ptr, data, data_len);
+	tmp_ptr += data_len;
+	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, data_len + 7);
+	*tmp_ptr = 0x16;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
+}
+
+void SendConnectMsg(uint8_t to, uint8_t from) {
+	uint8_t data[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01, 0x00 };
+	uint8_t data_len = sizeof(data);
 	uint8_t *msg_ptr;
 	uint8_t *tmp_ptr;
 	uint8_t msg_len = data_len + 14;
@@ -93,31 +166,20 @@ void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
 	*tmp_ptr++ = 0x1F;
 	*tmp_ptr++ = 0xE0;
 	*tmp_ptr++ = 0x04;
-	*tmp_ptr++ = req_num++;
+	*tmp_ptr++ = hprot.req_num;
 	memcpy(tmp_ptr, data, data_len);
 	tmp_ptr += data_len;
 	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, data_len + 8);
 	*tmp_ptr = 0x16;
+	hprot.conn_stat = CONN_REQ_SENT;
 	TRANS_ON();
 	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
-	/*
-	 osDelay(4);
-	 uint8_t* DC;
-	 DC = (uint8_t*) pvPortMalloc(3);
-	 DC[0] = 0xDC;
-	 DC[1] = 0x02;
-	 DC[2] = 0x01;
-	 TRANS_ON();
-	 HAL_UART_Transmit_DMA(&huart5, DC, 3);
-	 */
-	hprot.is_connected = 1U;
-	hprot.have_data_to_send = 0U;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart == &huart5) {
-		CB_Write(&inbuf_UART, received_byte);
 		HAL_UART_Receive_IT(&huart5, &received_byte, 1);
+		CB_Write(&inbuf_UART, received_byte);
 		__HAL_TIM_SET_COUNTER(&htim8, 0x00U);
 		HAL_TIM_Base_Start_IT(&htim8);
 	}

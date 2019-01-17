@@ -4,15 +4,31 @@
  *  Created on: 25 дек. 2018 г.
  *      Author: AZharkov
  */
-
+/* Includes */
 #include "protocol.h"
+/* -------- */
+
+/* Global variables */
+xQueueHandle protocol_queue;
+/* ---------------- */
+
+/* Function prototypes */
+static inline error_t TokenCmdProcessing(telegram_t * tel);
+static inline error_t NoDataCmdProcessing(telegram_t * tel);
+static inline error_t VarDataCmdProcessing(telegram_t * tel);
+static inline error_t FixDataCmdProcessing(telegram_t * tel);
+/* ------------------- */
+
+/* ---------- FUNCTIONS ------------ */
+/* -------||--||--||--||--||-------- */
+/* -------\/--\/--\/--\/--\/-------- */
 
 void ProtocolSettingsInit(profibus_MPI_t* hp) {
 	hp->own_address = hflash.own_addr;
 	hp->speed = hflash.speed;
 	hp->token_possession = 0U;
-	hp->have_data_to_send = 0U;
-	hp->is_connected = 0U;
+	hp->confirm_status = CONF_OK;
+	hp->conn_stat = CONN_NO;
 	hp->wait_for_answer = 0U;
 	hp->data_ptr = NULL;
 	hp->data_len = 0U;
@@ -27,16 +43,29 @@ uint8_t CalculateFCS(uint8_t * buf, uint8_t len) {
 }
 
 static inline error_t TokenCmdProcessing(telegram_t * tel) {
-	if (hprot.have_data_to_send == 0U) {
-		SendTokenMsg(tel->SA, hprot.own_address);
-		hprot.token_possession = 0U;
+	parcel_t parc;
+	if (hprot.confirm_status == CONF_NEED07) {
+		SendConfirmMsg(tel->SA, hprot.own_address, 0x07, 0x5C);
+	} else if (hprot.confirm_status == CONF_NEED08){
+		SendConfirmMsg(tel->SA, hprot.own_address, 0x08, 0x5C);
 	} else {
-		hprot.token_possession = 1U;
-		SendRequestMsg(tel->SA, hprot.own_address, hprot.data_ptr,
-				hprot.data_len);
-		hprot.have_data_to_send = 0U;
+		if (xQueuePeek(tcp_client_queue,&parc,0) != pdPASS) {
+			SendTokenMsg(tel->SA, hprot.own_address);
+			hprot.token_possession = 0U;
+		} else {
+			hprot.token_possession = 1U;
+			if (hprot.conn_stat == CONN_OK) {
+				xQueueReceive(tcp_client_queue, &parc, 0);
+				SendRequestMsg(tel->SA, hprot.own_address, parc.data, parc.len);
+				vPortFree(parc.data);
+			} else if (hprot.conn_stat == CONN_NO) {
+				SendConnectMsg(tel->SA, hprot.own_address);
+			} else {
+				SendTokenMsg(tel->SA, hprot.own_address);
+				hprot.token_possession = 0U;
+			}
+		}
 	}
-
 	return NO_ERR;
 }
 
@@ -50,8 +79,22 @@ static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 static inline error_t VarDataCmdProcessing(telegram_t * tel) {
 
 	if (tel->UK1 == 0xD0) {
-		SendAckMsg();
+		hprot.confirm_status = CONF_NEED07;
+
+	} else if (tel->UK1 == 0x05) {
+		hprot.confirm_status = CONF_OK;
+		hprot.conn_stat = CONN_OK;
+
+	} else if (tel->FC == 0x5C) {
+		parcel_t parc;
+		parc.len = tel->LE - 7;
+		parc.data = pvPortMalloc(parc.len);
+		memcpy(parc.data, tel->PDU, parc.len);
+		xQueueSend(protocol_queue, &parc, 0);
+		hprot.confirm_status = CONF_NEED08;
 	}
+
+	SendAckMsg();
 	if (tel->PDU != NULL) {
 		vPortFree(tel->PDU);
 		tel->PDU = NULL;
@@ -128,6 +171,10 @@ error_t CommandParser(uint8_t *buf) {
 			buf += pdu_size;
 			htel.FCS = *buf++;
 			htel.ED = *buf;
+		} else if (htel.UK1 == 0x05) {
+			htel.UK2 = *buf++;
+			htel.FCS = *buf++;
+			htel.ED = *buf;
 		} else {
 			htel.RN = *buf++;
 			uint pdu_size = htel.LE - 7;
@@ -144,7 +191,9 @@ error_t CommandParser(uint8_t *buf) {
 		break;
 	case 0xE5:
 		/* Acknowledgment */
-		return TokenCmdProcessing(&htel);
+		SendTokenMsg(htel.SA, hprot.own_address);
+		hprot.token_possession = 0U;
+		return NO_ERR;
 		break;
 	default:
 		return UNKNOWN_SD_ERR;

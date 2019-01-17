@@ -17,8 +17,15 @@
 #include "eeprom.h"
 #include "protocol.h"
 #include "log.h"
+#include "FreeRTOS.h"
 
-void Serv_thread(void *arg);
+typedef struct parcel{
+	uint8_t * data;
+	uint16_t len;
+} parcel_t;
+
+extern xQueueHandle tcp_client_queue;
+void Client_thread(void *arg);
 
 
 #endif /* TCP_CLIENT_H_ */

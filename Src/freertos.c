@@ -49,7 +49,6 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <tcp_client.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -66,6 +65,7 @@
 #include "eeprom.h"
 #include "processUART.h"
 #include "log.h"
+#include "tcp_client.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,7 +97,6 @@ osThreadId heapCleanerHandle;
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
-osTimerId myTimer01Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -105,16 +104,12 @@ void StartHeapCleanerTask(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
-void Callback01(void const * argument);
 
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
-
-/* GetTimerTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
 
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
@@ -147,19 +142,6 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 }
 /* USER CODE END GET_IDLE_TASK_MEMORY */
 
-/* USER CODE BEGIN GET_TIMER_TASK_MEMORY */
-static StaticTask_t xTimerTaskTCBBuffer;
-static StackType_t xTimerStack[configTIMER_TASK_STACK_DEPTH];
-  
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize )  
-{
-  *ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
-  *ppxTimerTaskStackBuffer = &xTimerStack[0];
-  *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
-  /* place for user code */
-}                   
-/* USER CODE END GET_TIMER_TASK_MEMORY */
-
 /**
   * @brief  FreeRTOS initialization
   * @param  None
@@ -179,14 +161,9 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END RTOS_SEMAPHORES */
 
-  /* Create the timer(s) */
-  /* definition and creation of myTimer01 */
-  osTimerDef(myTimer01, Callback01);
-  myTimer01Handle = osTimerCreate(osTimer(myTimer01), osTimerOnce, NULL);
-
   /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	osThreadDef(processTask, StartProcessTask, osPriorityNormal, 0, 1024);
+	osThreadDef(processTask, StartProcessTask, osPriorityRealtime, 0, 1024);
 	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
 
 	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0,
@@ -206,6 +183,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
 	frames_queue = xQueueCreate(16, sizeof(uint16_t));
 	cleaner_queue = xQueueCreate(16, sizeof(uint8_t*));
+	tcp_client_queue = xQueueCreate(8, sizeof(parcel_t));
+	protocol_queue = xQueueCreate(8, sizeof(parcel_t));
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -243,7 +222,7 @@ void StartDefaultTask(void const * argument)
 		err = netconn_bind(conn_port102, IP_ADDR_ANY, 102);
 		if (err == ERR_OK) {
 			netconn_listen(conn_port102);
-			sys_thread_new("tcp_serv_thread", Serv_thread, (void*) conn_port102,
+			sys_thread_new("tcp_serv_thread", Client_thread, (void*) conn_port102,
 			DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
 		} else {
 			netconn_delete(conn_port102);
@@ -279,14 +258,6 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 	}
   /* USER CODE END StartDefaultTask */
-}
-
-/* Callback01 function */
-__weak void Callback01(void const * argument)
-{
-  /* USER CODE BEGIN Callback01 */
-  
-  /* USER CODE END Callback01 */
 }
 
 /* Private application code --------------------------------------------------*/

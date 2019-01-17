@@ -8,13 +8,17 @@
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
 
+/* Includes */
 #include "stm32f4xx_hal.h"
 #include "error_type.h"
 #include "config_IA.h"
 #include "FreeRTOS.h"
 #include "string.h"
 #include "processUART.h"
+#include "tcp_client.h"
+/* -------- */
 
+/* Type definitions */
 typedef struct {
 	uint8_t SD; /*Start Delimiter*/
 	uint8_t LE; /*Length of protocol data unit, (incl. DA,SA,FC,DSAP,SSAP)*/
@@ -32,21 +36,41 @@ typedef struct {
 	uint8_t ED; /*End Delimiter (= 0x16 !)*/
 } telegram_t;
 
+typedef enum conn_status{
+	CONN_NO,
+	CONN_REQ_SENT,
+	CONN_OK
+}conn_status_t;
+
+typedef enum conf_status{
+	CONF_NEED07,
+	CONF_NEED08,
+	CONF_SENT,
+	CONF_OK
+}conf_status_t;
+
 typedef struct {
 	uint8_t own_address; /* Device bus address */
 	volatile uint8_t token_possession; /* Has or not token, if "must_answer" = 0 give token back */
-	volatile uint8_t have_data_to_send; /* Must send an answer */
-	volatile uint8_t is_connected; /* Connection is established */
+	volatile conf_status_t confirm_status; /* Must send an confirmation*/
+	volatile conn_status_t conn_stat; /* Connection status*/
 	uint8_t wait_for_answer; /* Request was sent, waiting for answer */
 	uint32_t speed; /* Baud rate */
 	uint8_t* data_ptr; /* Pointer to data to send */
 	volatile uint8_t data_len; /* Data length */
+	uint8_t req_num;
 } profibus_MPI_t;
+/* ------------------- */
 
+/* Global variables for export */
+extern xQueueHandle protocol_queue;
 extern profibus_MPI_t hprot;
+/* --------------------------- */
 
+/* Function prototypes */
 void ProtocolSettingsInit(profibus_MPI_t* hp);
 uint8_t CalculateFCS(uint8_t * buf, uint8_t len);
 error_t CommandParser(uint8_t *buf);
+/* ------------------- */
 
 #endif /* PROTOCOL_H_ */

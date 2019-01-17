@@ -116,7 +116,6 @@ void Web_thread(void *arg) {
 							fs_close(&file);
 						} else if (strncmp((char const *) buf, "img/logo.png",
 								12) == 0) {
-							hprot.have_data_to_send = 1U;
 							fs_open(&file, "/img/logo.png");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),

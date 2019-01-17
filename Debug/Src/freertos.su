@@ -1,10 +1,8 @@
 core_cm4.h:1626:22:NVIC_EnableIRQ	16	static
 core_cm4.h:1698:22:NVIC_SetPriority	16	static
-freertos.c:125:13:configureTimerForRunTimeStats	8	static
-freertos.c:132:22:getRunTimeCounterValue	4	static
-freertos.c:141:6:vApplicationGetIdleTaskMemory	24	static
-freertos.c:154:6:vApplicationGetTimerTaskMemory	24	static
-freertos.c:168:6:MX_FREERTOS_Init	112	static
-freertos.c:219:6:StartDefaultTask	56	static
-freertos.c:285:13:Callback01	16	static
-freertos.c:295:6:StartHeapCleanerTask	24	static
+freertos.c:120:13:configureTimerForRunTimeStats	8	static
+freertos.c:127:22:getRunTimeCounterValue	4	static
+freertos.c:136:6:vApplicationGetIdleTaskMemory	24	static
+freertos.c:150:6:MX_FREERTOS_Init	104	static
+freertos.c:198:6:StartDefaultTask	56	static
+freertos.c:266:6:StartHeapCleanerTask	24	static
