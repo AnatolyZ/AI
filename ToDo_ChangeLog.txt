@@ -27,3 +27,4 @@
 3. Show message if IP-Address changed ();
 
 *************** CHANGE_LOG *****************
+12
