@@ -28,7 +28,8 @@ void SendTokenMsg(uint8_t to,uint8_t from);
 void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc);
 void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len);
 void SendConfirmMsg(uint8_t to, uint8_t from, uint8_t size, uint8_t func);
-void SendConnectMsg(uint8_t to, uint8_t from);
+void SendConnectMsg(uint8_t to, uint8_t from, uint8_t fc);
+void SendClosemMsg(uint8_t to, uint8_t from);
 void StartProcessTask(void const * argument);
 void CommandProcess(void);
 

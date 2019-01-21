@@ -3,9 +3,9 @@
 1. Store all data from JSON structure in flash
 2. 
 ---------- MPI/Profibus ----------
-1. Opportunity to connect to differrent racks;
+DONE- 1. Opportunity to connect to differrent racks;  
 2. Connect automatically after disconnect; 
-3. Correct rack/slot search;
+DONE- 3. Correct rack/slot search;
 
 ---------- Web-server ----------
 1. JSON parser;
@@ -27,4 +27,5 @@
 3. Show message if IP-Address changed ();
 
 *************** CHANGE_LOG *****************
-12
+v0.1.0 	- Opportunity to connect to differrent racks;
+ 		- Correct rack/slot search;

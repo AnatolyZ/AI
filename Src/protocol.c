@@ -44,10 +44,14 @@ uint8_t CalculateFCS(uint8_t * buf, uint8_t len) {
 
 static inline error_t TokenCmdProcessing(telegram_t * tel) {
 	parcel_t parc;
-	if (hprot.confirm_status == CONF_NEED07) {
+	if ((hprot.conn_stat == CONN_CLOSE) && (hprot.confirm_status != CONF_NEED08)) {
+		SendClosemMsg(tel->SA, hprot.own_address);
+	} else if (hprot.confirm_status == CONF_NEED07) {
 		SendConfirmMsg(tel->SA, hprot.own_address, 0x07, 0x5C);
-	} else if (hprot.confirm_status == CONF_NEED08){
+	} else if (hprot.confirm_status == CONF_NEED08) {
 		SendConfirmMsg(tel->SA, hprot.own_address, 0x08, 0x5C);
+	} else if (hprot.confirm_status == CONF_NEED07_AGAIN) {
+		SendConfirmMsg(tel->SA, hprot.own_address, 0x07, 0x7C);
 	} else {
 		if (xQueuePeek(tcp_client_queue,&parc,0) != pdPASS) {
 			SendTokenMsg(tel->SA, hprot.own_address);
@@ -55,11 +59,16 @@ static inline error_t TokenCmdProcessing(telegram_t * tel) {
 		} else {
 			hprot.token_possession = 1U;
 			if (hprot.conn_stat == CONN_OK) {
+				parc.data = NULL;
 				xQueueReceive(tcp_client_queue, &parc, 0);
 				SendRequestMsg(tel->SA, hprot.own_address, parc.data, parc.len);
-				vPortFree(parc.data);
+				if (parc.data != NULL) {
+					vPortFree(parc.data);
+				}
 			} else if (hprot.conn_stat == CONN_NO) {
-				SendConnectMsg(tel->SA, hprot.own_address);
+				SendConnectMsg(tel->SA, hprot.own_address, 0x6D);
+			} else if (hprot.conn_stat == CONN_AGAIN) {
+				SendConnectMsg(tel->SA, hprot.own_address, 0x5D);
 			} else {
 				SendTokenMsg(tel->SA, hprot.own_address);
 				hprot.token_possession = 0U;
@@ -72,6 +81,7 @@ static inline error_t TokenCmdProcessing(telegram_t * tel) {
 static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 	if (tel->FC == 0x49) {
 		SendNoDataMsg(tel->SA, tel->DA, 0x20);
+		hprot.master_address = tel->SA;
 	}
 	return NO_ERR;
 }
@@ -79,22 +89,38 @@ static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 static inline error_t VarDataCmdProcessing(telegram_t * tel) {
 
 	if (tel->UK1 == 0xD0) {
-		hprot.confirm_status = CONF_NEED07;
-
+		if (tel->FC == 0x6C) {
+			hprot.confirm_status = CONF_NEED07;
+			hprot.master_SAP = tel->SSAP;
+			SendAckMsg();
+		}
+		if (tel->FC == 0x5C) {
+			hprot.confirm_status = CONF_NEED07_AGAIN;
+			hprot.master_SAP = tel->SSAP;
+			SendAckMsg();
+		}
 	} else if (tel->UK1 == 0x05) {
 		hprot.confirm_status = CONF_OK;
 		hprot.conn_stat = CONN_OK;
-
-	} else if (tel->FC == 0x5C) {
+		SendAckMsg();
+	} else if (tel->UK1 == 0xB0) {
+		SendAckMsg();
+	} else if (tel->UK1 == 0xC0){
+		/* No ACK */
+	}
+	else if ((tel->FC == 0x7C) || (tel->FC == 0x5C)) {
 		parcel_t parc;
 		parc.len = tel->LE - 7;
 		parc.data = pvPortMalloc(parc.len);
 		memcpy(parc.data, tel->PDU, parc.len);
 		xQueueSend(protocol_queue, &parc, 0);
 		hprot.confirm_status = CONF_NEED08;
+		SendAckMsg();
+	}  else {
+		SendAckMsg();
 	}
 
-	SendAckMsg();
+
 	if (tel->PDU != NULL) {
 		vPortFree(tel->PDU);
 		tel->PDU = NULL;
@@ -157,7 +183,11 @@ error_t CommandParser(uint8_t *buf) {
 		htel.DSAP = *buf++;
 		htel.SSAP = *buf++;
 		htel.UK1 = *buf++;
-		if (htel.UK1 == 0xB0) {
+
+		if (htel.UK1 == 0xC0) {
+			htel.FCS = *buf++;
+			htel.ED = *buf;
+		} else if (htel.UK1 == 0xB0) {
 			htel.UK2 = *buf++;
 			htel.RN = *buf++;
 			htel.FCS = *buf++;

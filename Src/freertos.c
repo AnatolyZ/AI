@@ -182,9 +182,13 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
 	frames_queue = xQueueCreate(16, sizeof(uint16_t));
+	vQueueAddToRegistry(frames_queue,"frames_queue");
 	cleaner_queue = xQueueCreate(16, sizeof(uint8_t*));
+	vQueueAddToRegistry(cleaner_queue,"cleaner_queue");
 	tcp_client_queue = xQueueCreate(8, sizeof(parcel_t));
+	vQueueAddToRegistry(tcp_client_queue,"tcp_client_queue");
 	protocol_queue = xQueueCreate(8, sizeof(parcel_t));
+	vQueueAddToRegistry(protocol_queue,"protocol_queue");
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -210,7 +214,7 @@ void StartDefaultTask(void const * argument)
 		if (err == ERR_OK) {
 			netconn_listen(conn_port80);
 			sys_thread_new("web_thread", Web_thread, (void*) conn_port80,
-			DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
+			DEFAULT_THREAD_STACKSIZE, osPriorityNormal);
 		} else {
 			netconn_delete(conn_port80);
 		}
@@ -229,13 +233,6 @@ void StartDefaultTask(void const * argument)
 		}
 	}
 
-
-	/*
-	 uint8_t data[] = { 0x32, 0x01, 0x00, 0x00, 0x05, 0x00, 0x00, 0x1A, 0x00,
-	 0x04, 0x02, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x82, 0x00,
-	 0x00, 0x00, 0x12, 0x0A, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x81,
-	 0x00, 0x00, 0x00 };
-	 */
 	uint8_t data_conn1[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01, 0x00 };
 	uint8_t * request_data;
 	request_data = (uint8_t*) pvPortMalloc(sizeof(data_conn1));
@@ -246,13 +243,6 @@ void StartDefaultTask(void const * argument)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
-
-		/*
-		 osDelay(5000);
-		 LogText(SUB_SYS_LOG, LOG_LEV_INFO, "Test data is sent \r\n");
-		 hprot.have_data_to_send = 1U;
-		 osDelay(30000);
-		 */
 
 		osDelay(300);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);

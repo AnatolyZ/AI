@@ -36,6 +36,34 @@ void SendAckMsg(void) {
 	HAL_UART_Transmit_DMA(&huart5, temp, 1);
 }
 
+void SendClosemMsg(uint8_t to, uint8_t from) {
+	uint8_t *msg_ptr;
+	uint8_t *tmp_ptr;
+	uint8_t msg_len = 12;
+	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
+	if (msg_ptr == NULL) {
+		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.");
+		Error_Handler();
+	}
+	tmp_ptr = msg_ptr;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = 0x06;
+	*tmp_ptr++ = 0x06;
+	*tmp_ptr++ = 0x68;
+	*tmp_ptr++ = to | 0x80;
+	*tmp_ptr++ = from | 0x80;
+	*tmp_ptr++ = 0x5C;
+	*tmp_ptr++ = hprot.master_SAP;
+	*tmp_ptr++ = 0x1F;
+	*tmp_ptr++ = 0x80;
+	*tmp_ptr++ = CalculateFCS(msg_ptr + 4, 6);
+	*tmp_ptr = 0x16;
+	TRANS_ON();
+	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
+	hprot.conn_stat = CONN_CLOSED;
+}
+
 void SendConfirmMsg(uint8_t to, uint8_t from, uint8_t size, uint8_t func) {
 	uint8_t *msg_ptr;
 	uint8_t *tmp_ptr;
@@ -54,7 +82,7 @@ void SendConfirmMsg(uint8_t to, uint8_t from, uint8_t size, uint8_t func) {
 	*tmp_ptr++ = to | 0x80;
 	*tmp_ptr++ = from | 0x80;
 	*tmp_ptr++ = func;
-	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = hprot.master_SAP;
 	*tmp_ptr++ = 0x1F;
 	if (size == 0x07) {
 		*tmp_ptr++ = 0x05;
@@ -90,7 +118,7 @@ void SendTokenMsg(uint8_t to, uint8_t from) {
 		cnt = 10;
 	}
 	TRANS_ON();
-	if (HAL_UART_Transmit_DMA(&huart5, temp, 3) == HAL_BUSY){
+	if (HAL_UART_Transmit_DMA(&huart5, temp, 3) == HAL_BUSY) {
 		TRANS_OFF();
 		vPortFree(temp);
 	}
@@ -130,7 +158,7 @@ void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
 	*tmp_ptr++ = to | 0x80;
 	*tmp_ptr++ = from | 0x80;
 	*tmp_ptr++ = 0x7C;
-	*tmp_ptr++ = 0x12;
+	*tmp_ptr++ = hprot.master_SAP;
 	*tmp_ptr++ = 0x1F;
 	*tmp_ptr++ = 0xF1;
 	*tmp_ptr++ = hprot.req_num;
@@ -142,7 +170,7 @@ void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
 	HAL_UART_Transmit_DMA(&huart5, msg_ptr, msg_len);
 }
 
-void SendConnectMsg(uint8_t to, uint8_t from) {
+void SendConnectMsg(uint8_t to, uint8_t from, uint8_t fc) {
 	uint8_t data[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01, 0x00 };
 	uint8_t data_len = sizeof(data);
 	uint8_t *msg_ptr;
@@ -161,7 +189,7 @@ void SendConnectMsg(uint8_t to, uint8_t from) {
 	*tmp_ptr++ = 0x68;
 	*tmp_ptr++ = to | 0x80;
 	*tmp_ptr++ = from | 0x80;
-	*tmp_ptr++ = 0x6D;
+	*tmp_ptr++ = fc;
 	*tmp_ptr++ = 0x00;
 	*tmp_ptr++ = 0x1F;
 	*tmp_ptr++ = 0xE0;

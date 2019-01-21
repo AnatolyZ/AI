@@ -39,14 +39,18 @@ typedef struct {
 typedef enum conn_status{
 	CONN_NO,
 	CONN_REQ_SENT,
-	CONN_OK
+	CONN_OK,
+	CONN_AGAIN,
+	CONN_CLOSE,
+	CONN_CLOSED
 }conn_status_t;
 
 typedef enum conf_status{
 	CONF_NEED07,
 	CONF_NEED08,
 	CONF_SENT,
-	CONF_OK
+	CONF_OK,
+	CONF_NEED07_AGAIN
 }conf_status_t;
 
 typedef struct {
@@ -58,6 +62,8 @@ typedef struct {
 	uint32_t speed; /* Baud rate */
 	uint8_t* data_ptr; /* Pointer to data to send */
 	volatile uint8_t data_len; /* Data length */
+	volatile uint8_t master_address; /* Master address */
+	volatile uint8_t master_SAP; /* Master SAP */
 	uint8_t req_num;
 } profibus_MPI_t;
 /* ------------------- */
