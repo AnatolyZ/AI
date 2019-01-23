@@ -27,10 +27,12 @@ extern struct netif gnetif;
 extern UART_HandleTypeDef huart5;
 
 static void form_data_parser(char * in_buf);
-static uint read_param(char * out_buf, const char * const in_buf, const uint max_len);
+static uint read_param(char * out_buf, const char * const in_buf,
+		const uint max_len);
 
-static uint read_param(char * out_buf, const char * const  in_buf, const uint max_len){
-	const char* tmp_p =  in_buf;
+static uint read_param(char * out_buf, const char * const in_buf,
+		const uint max_len) {
+	const char* tmp_p = in_buf;
 	uint len = 0;
 	while (*tmp_p != ' ' && *tmp_p != '&' && len <= max_len) {
 		*out_buf++ = *tmp_p;
@@ -39,8 +41,6 @@ static uint read_param(char * out_buf, const char * const  in_buf, const uint ma
 	}
 	return len;
 }
-
-
 
 static void form_data_parser(char * in_buf) {
 	char par_str[16];
@@ -51,33 +51,35 @@ static void form_data_parser(char * in_buf) {
 			in_buf++;
 		}
 		int param_num = atoi(in_buf);
-		if (param_num < 9){
+		if (param_num < 9) {
 			in_buf += 2;
 		} else {
 			in_buf += 3;
 		}
-		switch(param_num){
+		switch (param_num) {
 		case 1:                                        //IP-address
-			par_len = read_param(par_str,in_buf,15);
+			par_len = read_param(par_str, in_buf, 15);
 			par_str[par_len] = '\0';
 			ip4_addr_t new_ip;
-			ipaddr_aton(par_str,&new_ip);
-			EE_WriteVariable(IP_02_01_ADDR,(uint16_t)(new_ip.addr & 0x0000FFFF));
-			EE_WriteVariable(IP_04_03_ADDR,(uint16_t)((new_ip.addr >> 16) & 0x0000FFFF));
-			netif_set_ipaddr(&gnetif,&new_ip);
+			ipaddr_aton(par_str, &new_ip);
+			EE_WriteVariable(IP_02_01_ADDR,
+					(uint16_t) (new_ip.addr & 0x0000FFFF));
+			EE_WriteVariable(IP_04_03_ADDR,
+					(uint16_t) ((new_ip.addr >> 16) & 0x0000FFFF));
+			netif_set_ipaddr(&gnetif, &new_ip);
 			in_buf += par_len;
 			break;
 		case 2:                                       //Baudrate
-			par_len = read_param(par_str,in_buf,15);
+			par_len = read_param(par_str, in_buf, 15);
 			par_str[par_len] = '\0';
 			baudrate = atoi(par_str);
 			HAL_UART_DeInit(&huart5);
 			huart5.Init.BaudRate = baudrate;
-			EE_WriteVariable(BR_LS_ADDR,(uint16_t)(baudrate & 0x0000FFFF));
-			EE_WriteVariable(BR_MS_ADDR,(uint16_t)((baudrate >> 16) & 0x0000FFFF));
-			if (HAL_UART_Init(&huart5) != HAL_OK)
-			{
-			   Error_Handler();
+			EE_WriteVariable(BR_LS_ADDR, (uint16_t) (baudrate & 0x0000FFFF));
+			EE_WriteVariable(BR_MS_ADDR,
+					(uint16_t) ((baudrate >> 16) & 0x0000FFFF));
+			if (HAL_UART_Init(&huart5) != HAL_OK) {
+				Error_Handler();
 			}
 			in_buf += par_len;
 			break;
@@ -94,7 +96,10 @@ void Web_thread(void *arg) {
 	u16_t buflen;
 	char* buf;
 	struct fs_file file;
-
+	uint8_t *json;
+	FlashToJSON(&hjsondata, &hflash);
+	json = (uint8_t*)pvPortMalloc(200);
+	GetJSONData(json);
 	osDelay(1);
 	for (;;) {
 		err = netconn_accept(arg_conn, &newconn);
@@ -135,9 +140,11 @@ void Web_thread(void *arg) {
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-						} else if (strncmp((char const *) buf, "AI.shtml?led=1",
-								14) == 0) {
-							HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_9);
+						} else if (strncmp((char const *) buf, "AI.data?=", 9)
+								== 0) {
+							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER, json);
+							netconn_write(newconn, PAGE_BODY,
+									strlen((char* )PAGE_BODY), NETCONN_COPY);
 						} else if (strncmp((char const *) buf, "AI.shtml?IP=",
 								12) == 0) {
 							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER,
@@ -147,7 +154,8 @@ void Web_thread(void *arg) {
 						} else if (strncmp((char const *) buf, "AI.shtml?BR=",
 								12) == 0) {
 
-							sprintf(PAGE_BODY, "%s%u", PAGE_HEADER,(uint)huart5.Init.BaudRate);
+							sprintf(PAGE_BODY, "%s%u", PAGE_HEADER,
+									(uint) huart5.Init.BaudRate);
 							netconn_write(newconn, PAGE_BODY,
 									strlen((char* )PAGE_BODY), NETCONN_COPY);
 						} else if (*buf == '?') {

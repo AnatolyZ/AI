@@ -99,18 +99,28 @@
 #define PAGE_FULL             ((uint8_t)0x80)
 
 /* Variables' number */
-#define NB_OF_VAR             ((uint8_t)10)
+#define NB_OF_VAR             ((uint8_t)19)
 
 
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-#define 		MEMORY_KEY			0xBEAB   /* Key for default memory initiation */
+#define 		MEMORY_KEY			0xDEAD   /* Key for default memory initiation */
 #define			DEFAULT_IP_02_01	0xA8C0   /* 192.168.004.253 - default IP */
 #define			DEFAULT_IP_04_03	0xFD04   /* 111.222.333.444 - template */
 #define			DEFAULT_BR_MS		0x0002   /*------------*/
 #define			DEFAULT_BR_LS		0xDC6C   /* 187500 Baud*/
 #define			DEFAULT_MPI_ADDR	0x0001   /* Default address for MPI/Profibus */
+#define			DEFAULT_PORT		0x0066   /* Default port number */
+#define			DEFAULT_MASK_02_01	0xFFFF   /* 192.168.004.253 - default IP */
+#define			DEFAULT_MASK_04_03	0x00FF   /* 111.222.333.444 - template */
+#define			DEFAULT_GATE_02_01	0xA8C0   /* 192.168.004.253 - default IP */
+#define			DEFAULT_GATE_04_03	0x0104   /* 111.222.333.444 - template */
+#define			DEFAULT_SN_MS		0x0000   /*------------*/
+#define			DEFAULT_SN_LS		0x0001   /* Default serial number*/
+#define 		DEFAULT_MAC_02_01 	0x0200
+#define 		DEFAULT_MAC_04_03	0x42A2	 /* Hilscher_42:50:e4 (00:02:a2:42:50:e4) */
+#define 		DEFAULT_MAC_06_05 	0xE450
 
 /* Exported functions ------------------------------------------------------- */
 uint16_t EE_Init(void);
@@ -123,10 +133,19 @@ uint16_t EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
 #define 		BR_MS_ADDR 		    3
 #define 		BR_LS_ADDR 		    4
 #define 		MPI_ADRR_ADDR	    5
-#define 		RESERVED01 			6
-#define 		RESERVED02 			7
-#define 		RESERVED03 			8
-#define 		RESERVED04 			9
+#define 		PORT_ADRR			6
+#define 		MASK_02_01_ADDR		7
+#define 		MASK_04_03_ADDR		8
+#define 		GATE_02_01_ADDR		9
+#define 		GATE_04_03_ADDR		10
+#define 		SN_MS_ADDR 		    11
+#define 		SN_LS_ADDR 		    12
+#define 		VER_1_ADDR 		    13
+#define 		VER_2_ADDR 		    14
+#define 		VER_3_ADDR 		    15
+#define 		MAC_02_01_ADDR 		16
+#define 		MAC_04_03_ADDR		17
+#define 		MAC_06_05_ADDR 		18
 
 #endif /* __EEPROM_H */
 

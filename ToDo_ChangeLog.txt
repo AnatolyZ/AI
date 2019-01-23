@@ -1,7 +1,7 @@
 ******************* ToDo ******************* 
 ---------- Core ----------
-1. Store all data from JSON structure in flash
-2. 
+DONE- 1. Store all data from JSON structure in flash
+2. Add watchdog
 ---------- MPI/Profibus ----------
 DONE- 1. Opportunity to connect to differrent racks;  
 2. Connect automatically after disconnect; 
@@ -9,7 +9,7 @@ DONE- 3. Correct rack/slot search;
 
 ---------- Web-server ----------
 1. JSON parser;
-2. JSON data structure:
+DONE- 2. JSON data structure:
 	2.1. IP-Address;
 	2.2. Subnet mask;
 	2.3. Gateway;
@@ -18,14 +18,19 @@ DONE- 3. Correct rack/slot search;
 	2.6. Own Address;
 	2.7. Firmware version (read-only);
 	2.8. Serial number (read-only)??;
-	2.6. MAC-Address (read-only)??;
+	2.9. MAC-Address (read-only)??;
 3. Change IP-Address after reload;
-
+4. Save JSON data in flash;
 ---------- Web-page ----------
-1. Store data as JSON
-2. Show firmware version;
+DONE- 1. Store data as JSON
+DONE- 2. Show firmware version;
 3. Show message if IP-Address changed ();
+4. Validate data;
 
 *************** CHANGE_LOG *****************
 v0.1.0 	- Opportunity to connect to differrent racks;
  		- Correct rack/slot search;
+
+v0.2.0 	- JSON data structure (Web-server);
+ 		- Show firmware version (Web-page);
+ 		- Store data as JSON (Web-page);

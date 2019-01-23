@@ -32,6 +32,7 @@ void Client_thread(void *arg) {
 					netbuf_data(inbuf, (void**) &buf, &buflen);
 					if ((buf[0] == 0x03) && (buf[1] == 0x00) && (buf[2] == 0x00)
 							&& (buf[3] == 0x16) && (buf[21] == hprot.master_address)) {
+						data_COTP[18] = hprot.master_address;
 						netconn_write(newconn,
 								(const unsigned char* )(data_COTP),
 								sizeof(data_COTP), NETCONN_COPY);

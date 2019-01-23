@@ -18,10 +18,16 @@ IP_04_03_ADDR,
 BR_MS_ADDR,
 BR_LS_ADDR,
 MPI_ADRR_ADDR,
-RESERVED01,
-RESERVED02,
-RESERVED03,
-RESERVED04, };
+PORT_ADRR,
+MASK_02_01_ADDR,
+MASK_04_03_ADDR,
+GATE_02_01_ADDR,
+GATE_04_03_ADDR,
+SN_MS_ADDR,
+SN_LS_ADDR,
+MAC_02_01_ADDR,
+MAC_04_03_ADDR,
+MAC_06_05_ADDR };
 
 void FlashInit() {
 
@@ -35,7 +41,17 @@ void FlashInit() {
 		EE_WriteVariable(BR_MS_ADDR, DEFAULT_BR_MS);
 		EE_WriteVariable(BR_LS_ADDR, DEFAULT_BR_LS);
 		EE_WriteVariable(MPI_ADRR_ADDR, DEFAULT_MPI_ADDR);
-		/* --------------------------------------------------- */
+		EE_WriteVariable(PORT_ADRR, DEFAULT_PORT);
+		EE_WriteVariable(MASK_02_01_ADDR, DEFAULT_MASK_02_01);
+		EE_WriteVariable(MASK_04_03_ADDR, DEFAULT_MASK_04_03);
+		EE_WriteVariable(GATE_02_01_ADDR, DEFAULT_GATE_02_01);
+		EE_WriteVariable(GATE_04_03_ADDR, DEFAULT_GATE_04_03);
+		EE_WriteVariable(SN_MS_ADDR, DEFAULT_SN_MS);
+		EE_WriteVariable(SN_LS_ADDR, DEFAULT_SN_LS);
+		EE_WriteVariable(MAC_02_01_ADDR, DEFAULT_MAC_02_01);
+		EE_WriteVariable(MAC_04_03_ADDR, DEFAULT_MAC_04_03);
+		EE_WriteVariable(MAC_06_05_ADDR, DEFAULT_MAC_06_05);
+		/* ---------------------------------------------- */
 	}
 	/* Variables initialization ------------------------------ */
 	union {
@@ -49,7 +65,7 @@ void FlashInit() {
 	EE_ReadVariable(BR_LS_ADDR, &tmp_u.ui16[0]);
 	huart5.Init.BaudRate = tmp_u.ui32;
 	hflash.speed = huart5.Init.BaudRate;
-    /* IP-address */
+	/* IP-address */
 	EE_ReadVariable(IP_02_01_ADDR, &tmp_u.ui16[0]);
 	EE_ReadVariable(IP_04_03_ADDR, &tmp_u.ui16[1]);
 	hflash.IP_addr[0] = tmp_u.ui8[0];
@@ -58,5 +74,39 @@ void FlashInit() {
 	hflash.IP_addr[3] = tmp_u.ui8[3];
 	/* MPI/Profibus address */
 	EE_ReadVariable(MPI_ADRR_ADDR, &hflash.own_addr);
+	/* Subnet mask */
+	EE_ReadVariable(MASK_02_01_ADDR, &tmp_u.ui16[0]);
+	EE_ReadVariable(MASK_04_03_ADDR, &tmp_u.ui16[1]);
+	hflash.mask[0] = tmp_u.ui8[0];
+	hflash.mask[1] = tmp_u.ui8[1];
+	hflash.mask[2] = tmp_u.ui8[2];
+	hflash.mask[3] = tmp_u.ui8[3];
+	/* Gateway */
+	EE_ReadVariable(GATE_02_01_ADDR, &tmp_u.ui16[0]);
+	EE_ReadVariable(GATE_04_03_ADDR, &tmp_u.ui16[1]);
+	hflash.gate[0] = tmp_u.ui8[0];
+	hflash.gate[1] = tmp_u.ui8[1];
+	hflash.gate[2] = tmp_u.ui8[2];
+	hflash.gate[3] = tmp_u.ui8[3];
+	/* Port number */
+	EE_ReadVariable(PORT_ADRR, &hflash.port);
+	/* Serial number */
+	EE_ReadVariable(SN_MS_ADDR, &tmp_u.ui16[1]);
+	EE_ReadVariable(SN_LS_ADDR, &tmp_u.ui16[0]);
+	hflash.serial_num = tmp_u.ui32;
+	/* MAC address */
+	EE_ReadVariable(MAC_02_01_ADDR, &tmp_u.ui16[0]);
+	EE_ReadVariable(MAC_04_03_ADDR, &tmp_u.ui16[1]);
+	hflash.mac_addr[0] = tmp_u.ui8[0];
+	hflash.mac_addr[1] = tmp_u.ui8[1];
+	hflash.mac_addr[2] = tmp_u.ui8[2];
+	hflash.mac_addr[3] = tmp_u.ui8[3];
+	EE_ReadVariable(MAC_06_05_ADDR, &tmp_u.ui16[0]);
+	hflash.mac_addr[4] = tmp_u.ui8[0];
+	hflash.mac_addr[5] = tmp_u.ui8[1];
+
+	hflash.ver[0] = VER1;
+	hflash.ver[1] = VER2;
+	hflash.ver[2] = VER3;
 	/* ------------------------------------------------------- */
 }

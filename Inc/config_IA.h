@@ -10,12 +10,24 @@
 
 #include "eeprom.h"
 
+/* Firmware version: VER1.VER2.VER3 */
+#define VER1 0
+#define VER2 2
+#define VER3 0
+/* Current version 0.1.0 */
 
 typedef struct {
 	uint32_t speed;
 	uint16_t own_addr;
 	uint8_t IP_addr[4];
+	uint8_t mask[4];
+	uint8_t gate[4];
+	uint16_t port;
+	uint32_t serial_num;
+	uint16_t ver[3];
+	uint8_t mac_addr[6];
 } flash_data_t;
+
 
 extern flash_data_t hflash;
 

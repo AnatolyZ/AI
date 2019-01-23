@@ -4,17 +4,42 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <link rel="icon" type="image/png" href="img/icon.png" />
   <script>
+	var AI_data = {
+		addr_IP: "192.168.4.253",
+		mask: "255.255.255.000",
+		gate: "192.168.4.1",
+		port: 102,
+		speed: 187500,
+		addr_own: 0,
+		ver: "0.0.0",
+		sn: 0,
+		addr_MAC: "AA-BB-CC-DD-EE-FF",
+	}
     var xhr1;
-	var xhr2;
-	function onload(){
+	function onload(){		
 		xhr1 = new(XMLHttpRequest);
-		xhr1.open("GET", "AI.shtml?IP=" + Math.random(), true);
+		xhr1.open("GET", "AI.data?=" + Math.random(), true);
 		xhr1.responseType = "text";
 		xhr1.onload = function (oEvent) {
-			document.getElementById('IP_addr').innerHTML = '<input name = "1" type="text" value = "' + xhr1.response + '" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">';
+			var resp = xhr1.response;
+			AI_data = JSON.parse (resp);
+			document.getElementById('IP_addr').value = AI_data.addr_IP;
+			document.getElementById('Subnet_addr').value = AI_data.mask;
+			document.getElementById('Gateway').value = AI_data.gate;
+			document.getElementById('Port_num').value = AI_data.port;
+			document.getElementById('Speed').value = AI_data.speed;
+			document.getElementById('Addr_own').value = AI_data.addr_own;
+			document.getElementById('Addr_MAC').value = AI_data.addr_MAC;
+			document.getElementById('Version').innerHTML = AI_data.ver;
 		}
-		xhr1.send(null);
+		xhr1.send(null);					
+	}
+	var xhr2;
+	function button_click()	
+	{
+		alert(JSON.stringify(AI_data));
 		
+	/*
 		xhr2 = new(XMLHttpRequest);
 		xhr2.open("GET", "AI.shtml?BR=" + Math.random(), true);
 		xhr2.responseType = "text";
@@ -22,45 +47,66 @@
 			document.getElementById('Baud').innerHTML = '<input name = "2" type="text" value = "' + xhr2.response + '" pattern = "[0-9]{1,8}">';
 		}
 		xhr2.send(null);
-		
+	*/
 	}
 
   </script>
   <link rel="stylesheet" href="style.css">
   <title>Адаптер интерфейсов MPI/Profibus -- Ethernet</title>
  </head>
- <body onload = "onload()">
- <div id = "header">
-	<p align = "center">
-		<img src="img/logo.png" alt = "dispetcher_logo">
-	</p>
-	<p align = "center">
-		Настройка параметров адаптера интерфейсов (MPI/Profibus -- Ethernet) АИ-01
-	</p>
-</div>
-<form>
- <div id = "page">
-    <table border="1" width="50%" cellpadding="5" align="center">
-		<tr>
-			<th>Параметр</th>
-			<th>Значение</th>
-		</tr>
-		
-		<tr>
-			<td>IP-адрес</td>
-			<td align = "center" id = "IP_addr"><input name = "1" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
-			</td>
-		</tr>
-		
-		<tr>
-			<td>Скорость обмена, Бод</td>
-			<td align = "center" id = "Baud"><input name = "2" type="text" value = "Введите скорость обмена" pattern = "\d{1,9}">
-		</tr>	
-	</table>
-	
-	<p align="center" ><input type="submit" value = "Сохранить"></p>
-
- </div>
- </form>
- </body>
+	<body onload = "onload()">
+		<div id = "header" >
+			<p align = "center">
+				<img src="img/logo.png" alt = "dispetcher_logo">
+			</p>
+			<p align = "center" >
+				Настройка параметров адаптера интерфейсов (MPI/Profibus -- Ethernet) АИ-01
+			</p>
+		</div>
+		<div id = "page" >		
+			<table border="1" width="35%"  cellpadding="5" align="center" >
+				<tr>
+					<th>Параметр</th>
+					<th>Значение</th>
+				</tr>		
+				<tr>
+					<td>IP-адрес</td>
+					<td align = "center" ><input id = "IP_addr" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					</td>
+				</tr>		
+				<tr>
+					<td>Маска подсети</td>
+					<td align = "center" ><input id = "Subnet_addr" type="text" value = "Введите маску подсети" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					</td>
+				</tr>		
+				<tr>
+					<td>Шлюз</td>
+					<td align = "center" ><input id = "Gateway" type="text" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					</td>
+				</tr>		
+				<tr>
+					<td>Номер порта</td>
+					<td align = "center" "><input id = "Port_num" type="text" pattern = "\d{1,5}">
+					</td>
+				</tr>	
+				<tr>
+					<td>Скорость обмена, Бод</td>
+					<td align = "center" ><input id = "Speed" type="text" pattern = "\d{1,9}">
+				</tr>		
+				<tr>
+					<td>Адрес преобразователя</td>
+					<td align = "center" ><input id = "Addr_own" type="text" pattern = "\d{1,2}">
+				</tr>
+				<tr>
+					<td>MAC-адрес</td>
+					<td align = "center" ><input id = "Addr_MAC" type="text" pattern = "[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}">
+				</tr>		
+				<tr>
+					<td>Версия ВПО</td>
+					<td align = "center" id = "Version">  </td>
+				</tr>
+			</table>				
+			<p align="center" ><input type="button" value = "Сохранить" onclick="button_click()"></p>
+		</div>
+	</body>
 </html>

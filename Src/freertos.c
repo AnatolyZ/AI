@@ -243,8 +243,8 @@ void StartDefaultTask(void const * argument)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
-
-		osDelay(300);
+		printf("Free heap: %d\r\n",xPortGetMinimumEverFreeHeapSize());
+		osDelay(500);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
 	}
   /* USER CODE END StartDefaultTask */
