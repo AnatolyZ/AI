@@ -12,7 +12,7 @@
 
 /* Firmware version: VER1.VER2.VER3 */
 #define VER1 0
-#define VER2 2
+#define VER2 3
 #define VER3 0
 /* Current version 0.1.0 */
 

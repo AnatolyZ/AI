@@ -9,6 +9,8 @@
 #define JSON_H_
 
 /* Macro definitions */
+#define MAXNUMBER_OF_TOKENS 32
+#define MAX_TOKEN_LENGTH 25
 /* ----------------- */
 
 /* Includes */
@@ -16,6 +18,7 @@
 #include "string.h"
 #include "stdlib.h"
 #include "config_IA.h"
+#include "jsmn.h"
 /* -------- */
 
 /* Type definitions */
@@ -39,6 +42,8 @@ extern json_data_t hjsondata;
 /* Function prototypes */
 uint GetJSONData(uint8_t *pstr);
 void FlashToJSON(json_data_t *js,flash_data_t *fs);
+void ParseJSON(json_data_t *js,uint8_t *json_str);
+void DecodeURL(uint8_t *buf, uint8_t *result);
 /* ------------------- */
 
 #endif /* JSON_H_ */

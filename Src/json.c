@@ -15,10 +15,7 @@ json_data_t hjsondata;
 
 /* Function prototypes */
 /* ------------------- */
-/*
- {\"addr_IP\":\"192.168.4.255\",\"mask\":\"255.255.255.000\",\"gate\":\"192.168.4.1\",\"port\":102,\"speed\":187500,
- \"addr_own\":1,\"ver\":\"0.0.0\",\"sn\":0,\"addr_MAC\":\"AA-BB-CC-DD-EE-FF\"}
- */
+
 /* ---------- FUNCTIONS ------------ */
 /* -------||--||--||--||--||-------- */
 /* -------\/--\/--\/--\/--\/-------- */
@@ -71,15 +68,7 @@ uint GetJSONData(uint8_t *pstr) {
 }
 
 void FlashToJSON(json_data_t *js, flash_data_t *fs) {
-	/*
 
-	 uint8_t ver[12];
-	 } json_data_t;
-
-	 uint16_t ver[3];
-
-	 } flash_data_t;
-	 */
 	js->speed = fs->speed;
 	js->port = fs->port;
 	js->own_addr = fs->own_addr;
@@ -129,4 +118,79 @@ void FlashToJSON(json_data_t *js, flash_data_t *fs) {
 		len++;
 	}
 	js->ver[--len] = '\0';
+}
+
+void DecodeURL(uint8_t *buf, uint8_t *result) {
+	while (*buf != '\r') {
+		if (*buf == '%') {
+			if ((*(buf + 1) == '7') && (*(buf + 2) == 'B')) {
+				*result = '{';
+				buf += 2;
+			}
+			if ((*(buf + 1) == '2') && (*(buf + 2) == '2')) {
+				*result = '\"';
+				buf += 2;
+			}
+			if ((*(buf + 1) == '7') && (*(buf + 2) == 'D')) {
+				*result = '}';
+				*(result+1) = '\0';
+				break;
+			}
+		} else {
+			*result = *buf;
+		}
+		buf++;
+		result++;
+	}
+}
+
+void ParseJSON(json_data_t *js, uint8_t *json_str) {
+	int resultCode;
+	jsmn_parser p;
+	jsmntok_t tokens[MAXNUMBER_OF_TOKENS];
+	jsmn_init(&p);
+	resultCode = jsmn_parse(&p, (char*) json_str, strlen((char*) json_str),
+			tokens, sizeof(tokens) / sizeof(tokens[0]));
+
+	if (resultCode > 0) {
+		uint8_t keyString[MAX_TOKEN_LENGTH];
+		uint8_t Prev_keyString[MAX_TOKEN_LENGTH];
+
+		for (int i = 1; i <= resultCode - 1; i++) // resultCode == 0 => whole json string
+				{
+			jsmntok_t key = tokens[i];
+			uint16_t length = key.end - key.start;
+
+			if (length < MAX_TOKEN_LENGTH) {
+				memcpy(keyString, &json_str[key.start], length);
+				keyString[length] = '\0';
+				/*
+				 {\"addr_IP\":\"192.168.4.255\",\"mask\":\"255.255.255.000\",\"gate\":\"192.168.4.1\",\"port\":102,\"speed\":187500,
+				 \"addr_own\":1,\"ver\":\"0.0.0\",\"sn\":0,\"addr_MAC\":\"AA-BB-CC-DD-EE-FF\"}
+				 */
+				if (strcmp((char*) Prev_keyString, "addr_IP") == 0) {
+					strcpy((char*) js->ip_addr, (char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "mask") == 0) {
+					strcpy((char*) js->mask, (char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "gate") == 0) {
+					strcpy((char*) js->gate, (char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "port") == 0) {
+					js->port = (uint16_t) atoi((char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "speed") == 0) {
+					js->speed = (uint32_t) atoi((char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "addr_own") == 0) {
+					js->own_addr = (uint8_t) atoi((char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "sn") == 0) {
+					if (js->serial_num
+							== ((DEFAULT_SN_MS << 16) + DEFAULT_SN_LS)) {
+						js->serial_num = (uint8_t) atoi((char*) keyString);
+					}
+				} else if (strcmp((char*) Prev_keyString, "addr_MAC") == 0) {
+					strcpy((char*) js->mac_addr, (char*) keyString);
+				}
+				strcpy((char*) Prev_keyString, (char*) keyString);
+			}
+		}
+	}
+
 }

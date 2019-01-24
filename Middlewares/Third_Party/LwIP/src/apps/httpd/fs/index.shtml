@@ -37,17 +37,24 @@
 	var xhr2;
 	function button_click()	
 	{
-		alert(JSON.stringify(AI_data));
-		
-	/*
-		xhr2 = new(XMLHttpRequest);
-		xhr2.open("GET", "AI.shtml?BR=" + Math.random(), true);
-		xhr2.responseType = "text";
-		xhr2.onload = function (oEvent) {
-			document.getElementById('Baud').innerHTML = '<input name = "2" type="text" value = "' + xhr2.response + '" pattern = "[0-9]{1,8}">';
+		if (confirm("Все внесенные изменения будут применены после перезагрузки устройства. На данный момент проверка коректности введенных данных не реализована. БУДТЕ ВНИМАТЕЛЬНЫ!!!"))
+		{
+			AI_data.addr_IP = document.getElementById('IP_addr').value;
+			AI_data.mask = document.getElementById('Subnet_addr').value;
+			AI_data.gate = document.getElementById('Gateway').value;
+			AI_data.port = document.getElementById('Port_num').value;
+			AI_data.speed = document.getElementById('Speed').value;
+			AI_data.addr_own = document.getElementById('Addr_own').value;
+			AI_data.addr_MAC = document.getElementById('Addr_MAC').value;
+			
+			xhr2 = new(XMLHttpRequest);
+			xhr2.open("GET", "json=" + JSON.stringify(AI_data) + Math.random(), true);
+			xhr2.responseType = "text";
+			xhr2.onload = function (oEvent) {
+				alert("Данные переданы на сервер.");
+			}
+			xhr2.send(null);
 		}
-		xhr2.send(null);
-	*/
 	}
 
   </script>

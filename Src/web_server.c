@@ -96,10 +96,8 @@ void Web_thread(void *arg) {
 	u16_t buflen;
 	char* buf;
 	struct fs_file file;
-	uint8_t *json;
 	FlashToJSON(&hjsondata, &hflash);
-	json = (uint8_t*)pvPortMalloc(200);
-	GetJSONData(json);
+
 	osDelay(1);
 	for (;;) {
 		err = netconn_accept(arg_conn, &newconn);
@@ -142,9 +140,16 @@ void Web_thread(void *arg) {
 							fs_close(&file);
 						} else if (strncmp((char const *) buf, "AI.data?=", 9)
 								== 0) {
-							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER, json);
-							netconn_write(newconn, PAGE_BODY,
-									strlen((char* )PAGE_BODY), NETCONN_COPY);
+							uint8_t *json;
+							json = (uint8_t*) pvPortMalloc(250);
+							if (json != NULL) {
+								GetJSONData(json);
+								sprintf(PAGE_BODY, "%s%s", PAGE_HEADER, json);
+								netconn_write(newconn, PAGE_BODY,
+										strlen((char* )PAGE_BODY),
+										NETCONN_COPY);
+								vPortFree(json);
+							}
 						} else if (strncmp((char const *) buf, "AI.shtml?IP=",
 								12) == 0) {
 							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER,
@@ -165,6 +170,18 @@ void Web_thread(void *arg) {
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
+						} else if (strncmp((char const *) buf, "json=", 5)
+								== 0) {
+							uint8_t *json_str;
+							json_str = (uint8_t*) pvPortMalloc(250);
+							if (json_str != NULL) {
+								DecodeURL((uint8_t*) buf + 5, json_str);
+								ParseJSON(&hjsondata, json_str);
+								netconn_write(newconn, PAGE_HEADER,
+										strlen((char* )PAGE_HEADER),
+										NETCONN_COPY);
+								vPortFree(json_str);
+							}
 						} else {
 							fs_open(&file, "/404.html");
 							netconn_write(newconn,
