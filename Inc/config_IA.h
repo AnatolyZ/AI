@@ -12,7 +12,7 @@
 
 /* Firmware version: VER1.VER2.VER3 */
 #define VER1 0
-#define VER2 3
+#define VER2 4
 #define VER3 0
 /* Current version 0.1.0 */
 
@@ -32,5 +32,6 @@ typedef struct {
 extern flash_data_t hflash;
 
 void FlashInit();
+void SaveFash(void);
 
 #endif /* CONFIG_IA_H_ */

@@ -19,6 +19,7 @@
 #include "stdlib.h"
 #include "config_IA.h"
 #include "jsmn.h"
+#include "lwip.h"
 /* -------- */
 
 /* Type definitions */
@@ -44,6 +45,7 @@ uint GetJSONData(uint8_t *pstr);
 void FlashToJSON(json_data_t *js,flash_data_t *fs);
 void ParseJSON(json_data_t *js,uint8_t *json_str);
 void DecodeURL(uint8_t *buf, uint8_t *result);
+void JSONToFlash(json_data_t *js,flash_data_t *fs);
 /* ------------------- */
 
 #endif /* JSON_H_ */

@@ -115,13 +115,14 @@ void SendTokenMsg(uint8_t to, uint8_t from) {
 	cnt--;
 	if (cnt == 0) {
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);
-		cnt = 10;
+		cnt = 100;
 	}
 	TRANS_ON();
 	if (HAL_UART_Transmit_DMA(&huart5, temp, 3) == HAL_BUSY) {
 		TRANS_OFF();
 		vPortFree(temp);
 	}
+	HAL_IWDG_Refresh(&hiwdg);
 }
 
 void SendNoDataMsg(uint8_t to, uint8_t from, uint8_t fc) {

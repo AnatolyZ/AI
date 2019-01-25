@@ -30,6 +30,7 @@
 			document.getElementById('Speed').value = AI_data.speed;
 			document.getElementById('Addr_own').value = AI_data.addr_own;
 			document.getElementById('Addr_MAC').value = AI_data.addr_MAC;
+			document.getElementById('Serial').value = AI_data.sn;
 			document.getElementById('Version').innerHTML = AI_data.ver;
 		}
 		xhr1.send(null);					
@@ -44,22 +45,33 @@
 			AI_data.gate = document.getElementById('Gateway').value;
 			AI_data.port = document.getElementById('Port_num').value;
 			AI_data.speed = document.getElementById('Speed').value;
-			AI_data.addr_own = document.getElementById('Addr_own').value;
+			AI_data.addr_own = document.getElementById('Addr_own').value;			
 			AI_data.addr_MAC = document.getElementById('Addr_MAC').value;
-			
+			AI_data.sn = document.getElementById('Serial').value;
 			xhr2 = new(XMLHttpRequest);
 			xhr2.open("GET", "json=" + JSON.stringify(AI_data) + Math.random(), true);
 			xhr2.responseType = "text";
 			xhr2.onload = function (oEvent) {
-				alert("Данные переданы на сервер.");
+				alert("Данные успешно переданы на устройство.");
 			}
 			xhr2.send(null);
 		}
 	}
-
+	var xhr3;
+	function reboot_click()	
+	{
+		xhr3 = new(XMLHttpRequest);
+		xhr3.open("GET", "cmd.reboot=1"+ Math.random(), true);
+		xhr3.responseType = "text";
+		xhr3.onload = function (oEvent) {
+			alert("Выполнена перзагрузка устройства.");
+			onload();
+		}
+		xhr3.send(null);
+	}
   </script>
   <link rel="stylesheet" href="style.css">
-  <title>Адаптер интерфейсов MPI/Profibus -- Ethernet</title>
+  <title>Адаптер интерфейсов АИ-01</title>
  </head>
 	<body onload = "onload()">
 		<div id = "header" >
@@ -67,53 +79,60 @@
 				<img src="img/logo.png" alt = "dispetcher_logo">
 			</p>
 			<p align = "center" >
-				Настройка параметров адаптера интерфейсов (MPI/Profibus -- Ethernet) АИ-01
+				Настройка параметров адаптера интерфейсов АИ-01
 			</p>
 		</div>
 		<div id = "page" >		
-			<table border="1" width="35%"  cellpadding="5" align="center" >
+			<table border="1" width="35%"  cellpadding="5" align="center">
 				<tr>
 					<th>Параметр</th>
 					<th>Значение</th>
 				</tr>		
 				<tr>
 					<td>IP-адрес</td>
-					<td align = "center" ><input id = "IP_addr" type="text" value = "Введите IP-адрес" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					<td align = "center" ><input id = "IP_addr" type="text"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Маска подсети</td>
-					<td align = "center" ><input id = "Subnet_addr" type="text" value = "Введите маску подсети" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					<td align = "center" ><input id = "Subnet_addr" type="text"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Шлюз</td>
-					<td align = "center" ><input id = "Gateway" type="text" pattern = "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}">
+					<td align = "center" ><input id = "Gateway" type="text"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Номер порта</td>
-					<td align = "center" "><input id = "Port_num" type="text" pattern = "\d{1,5}">
+					<td align = "center" ><input id = "Port_num" type="text"></td>
 					</td>
-				</tr>	
+				</tr>					
 				<tr>
 					<td>Скорость обмена, Бод</td>
-					<td align = "center" ><input id = "Speed" type="text" pattern = "\d{1,9}">
-				</tr>		
+					<td align = "center" ><input id = "Speed" type="text"></td>
+				</tr>						
 				<tr>
 					<td>Адрес преобразователя</td>
-					<td align = "center" ><input id = "Addr_own" type="text" pattern = "\d{1,2}">
-				</tr>
+					<td align = "center" ><input id = "Addr_own" type="text"></td>
+				</tr>				
 				<tr>
 					<td>MAC-адрес</td>
-					<td align = "center" ><input id = "Addr_MAC" type="text" pattern = "[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{2}">
-				</tr>		
+					<td align = "center" ><input id = "Addr_MAC" type="text"></td>
+				</tr>				
+				<tr>
+					<td>Серийный номер</td>
+					<td align = "center" ><input id = "Serial" type="text"></td>
+				</tr>
 				<tr>
 					<td>Версия ВПО</td>
-					<td align = "center" id = "Version">  </td>
+					<td align = "center" id = "Version"></td>
 				</tr>
 			</table>				
-			<p align="center" ><input type="button" value = "Сохранить" onclick="button_click()"></p>
+			<div align="center" float = "left" >			
+					<input type="button" value = "Сохранить" onclick="button_click()">
+					<input type="button" value = "Перезагрузка" onclick="reboot_click()">		
+			</div>
 		</div>
 	</body>
 </html>

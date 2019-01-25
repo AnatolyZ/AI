@@ -105,19 +105,19 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-#define 		MEMORY_KEY			0xDEAD   /* Key for default memory initiation */
+#define 		MEMORY_KEY			0xBEAF   /* Key for default memory initiation */
 #define			DEFAULT_IP_02_01	0xA8C0   /* 192.168.004.253 - default IP */
 #define			DEFAULT_IP_04_03	0xFD04   /* 111.222.333.444 - template */
 #define			DEFAULT_BR_MS		0x0002   /*------------*/
 #define			DEFAULT_BR_LS		0xDC6C   /* 187500 Baud*/
-#define			DEFAULT_MPI_ADDR	0x0001   /* Default address for MPI/Profibus */
+#define			DEFAULT_MPI_ADDR	0x0000   /* Default address for MPI/Profibus */
 #define			DEFAULT_PORT		0x0066   /* Default port number */
 #define			DEFAULT_MASK_02_01	0xFFFF   /* 192.168.004.253 - default IP */
 #define			DEFAULT_MASK_04_03	0x00FF   /* 111.222.333.444 - template */
 #define			DEFAULT_GATE_02_01	0xA8C0   /* 192.168.004.253 - default IP */
 #define			DEFAULT_GATE_04_03	0x0104   /* 111.222.333.444 - template */
 #define			DEFAULT_SN_MS		0x0000   /*------------*/
-#define			DEFAULT_SN_LS		0x0001   /* Default serial number*/
+#define			DEFAULT_SN_LS		0x0000   /* Default serial number*/
 #define 		DEFAULT_MAC_02_01 	0x0200
 #define 		DEFAULT_MAC_04_03	0x42A2	 /* Hilscher_42:50:e4 (00:02:a2:42:50:e4) */
 #define 		DEFAULT_MAC_06_05 	0xE450

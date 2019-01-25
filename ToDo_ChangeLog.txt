@@ -1,40 +1,29 @@
 ******************* ToDo ******************* 
 ---------- Core ----------
-DONE- 1. Store all data from JSON structure in flash
-2. Add watchdog
-3. Init sustem from flash data.
+
+
 ---------- MPI/Profibus ----------
-DONE- 1. Opportunity to connect to differrent racks;  
-2. Connect automatically after disconnect; 
-DONE- 3. Correct rack/slot search;
+
+- Connect automatically after disconnect; 
+
 ---------- Web-server ----------
-DONE- 1. JSON parser;
-DONE- 2. JSON data structure:
-	2.1. IP-Address;
-	2.2. Subnet mask;
-	2.3. Gateway;
-	2.4. Port number;
-	2.5. Speed;
-	2.6. Own Address;
-	2.7. Firmware version (read-only);
-	2.8. Serial number (read-only)??;
-	2.9. MAC-Address (read-only)??;
-3. Change IP-Address after reload;
-4. Save JSON data in flash;
-5. Add reboot button;
-6. Add serial number to page;
+
+
 ---------- Web-page ----------
-DONE- 1. Store data as JSON
-DONE- 2. Show firmware version;
-3. Show message if IP-Address changed ();
-4. Validate data;
+
+- Validate data;
 
 *************** CHANGE_LOG *****************
 v0.1.0 	- Opportunity to connect to differrent racks;
  		- Correct rack/slot search;
-
 v0.2.0 	- JSON data structure (Web-server);
  		- Show firmware version (Web-page);
  		- Store data as JSON (Web-page);
 v0.3.0  - JSON parser (Web-server); 
-		- Show message if data goes to server (Web-page);					
+		- Show message if data goes to server (Web-page);		
+v0.4.0  - Add reboot button (Web-page);
+		- Add serial number to page (Web-page);	
+		- Save JSON data in flash (Web-server);		
+		- Process reboot cmd (Web-server);
+		- Add watchdog (Core);
+		- Init sustem from flash data (Core);

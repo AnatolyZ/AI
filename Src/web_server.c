@@ -1,5 +1,7 @@
 #include "web_server.h"
 
+volatile int reboot_flag = 0;
+
 static const unsigned char PAGE_HEADER[] = {
 		//"HTTP/1.1 200 OK"
 		0x48, 0x54, 0x54, 0x50, 0x2f, 0x31, 0x2e, 0x30, 0x20, 0x32, 0x30, 0x30,
@@ -25,67 +27,6 @@ static const unsigned char PAGE_HEADER[] = {
 static portCHAR PAGE_BODY[768];
 extern struct netif gnetif;
 extern UART_HandleTypeDef huart5;
-
-static void form_data_parser(char * in_buf);
-static uint read_param(char * out_buf, const char * const in_buf,
-		const uint max_len);
-
-static uint read_param(char * out_buf, const char * const in_buf,
-		const uint max_len) {
-	const char* tmp_p = in_buf;
-	uint len = 0;
-	while (*tmp_p != ' ' && *tmp_p != '&' && len <= max_len) {
-		*out_buf++ = *tmp_p;
-		len++;
-		tmp_p++;
-	}
-	return len;
-}
-
-static void form_data_parser(char * in_buf) {
-	char par_str[16];
-	uint par_len;
-	uint baudrate = 0;
-	while (*in_buf != ' ') {
-		if (*in_buf == '&') {
-			in_buf++;
-		}
-		int param_num = atoi(in_buf);
-		if (param_num < 9) {
-			in_buf += 2;
-		} else {
-			in_buf += 3;
-		}
-		switch (param_num) {
-		case 1:                                        //IP-address
-			par_len = read_param(par_str, in_buf, 15);
-			par_str[par_len] = '\0';
-			ip4_addr_t new_ip;
-			ipaddr_aton(par_str, &new_ip);
-			EE_WriteVariable(IP_02_01_ADDR,
-					(uint16_t) (new_ip.addr & 0x0000FFFF));
-			EE_WriteVariable(IP_04_03_ADDR,
-					(uint16_t) ((new_ip.addr >> 16) & 0x0000FFFF));
-			netif_set_ipaddr(&gnetif, &new_ip);
-			in_buf += par_len;
-			break;
-		case 2:                                       //Baudrate
-			par_len = read_param(par_str, in_buf, 15);
-			par_str[par_len] = '\0';
-			baudrate = atoi(par_str);
-			HAL_UART_DeInit(&huart5);
-			huart5.Init.BaudRate = baudrate;
-			EE_WriteVariable(BR_LS_ADDR, (uint16_t) (baudrate & 0x0000FFFF));
-			EE_WriteVariable(BR_MS_ADDR,
-					(uint16_t) ((baudrate >> 16) & 0x0000FFFF));
-			if (HAL_UART_Init(&huart5) != HAL_OK) {
-				Error_Handler();
-			}
-			in_buf += par_len;
-			break;
-		}
-	}
-}
 
 void Web_thread(void *arg) {
 	err_t err, recv_err;
@@ -150,26 +91,6 @@ void Web_thread(void *arg) {
 										NETCONN_COPY);
 								vPortFree(json);
 							}
-						} else if (strncmp((char const *) buf, "AI.shtml?IP=",
-								12) == 0) {
-							sprintf(PAGE_BODY, "%s%s", PAGE_HEADER,
-									ip4addr_ntoa(&gnetif.ip_addr));
-							netconn_write(newconn, PAGE_BODY,
-									strlen((char* )PAGE_BODY), NETCONN_COPY);
-						} else if (strncmp((char const *) buf, "AI.shtml?BR=",
-								12) == 0) {
-
-							sprintf(PAGE_BODY, "%s%u", PAGE_HEADER,
-									(uint) huart5.Init.BaudRate);
-							netconn_write(newconn, PAGE_BODY,
-									strlen((char* )PAGE_BODY), NETCONN_COPY);
-						} else if (*buf == '?') {
-							form_data_parser(++buf);
-							fs_open(&file, "/index.shtml");
-							netconn_write(newconn,
-									(const unsigned char* )(file.data),
-									(size_t )file.len, NETCONN_NOCOPY);
-							fs_close(&file);
 						} else if (strncmp((char const *) buf, "json=", 5)
 								== 0) {
 							uint8_t *json_str;
@@ -177,18 +98,25 @@ void Web_thread(void *arg) {
 							if (json_str != NULL) {
 								DecodeURL((uint8_t*) buf + 5, json_str);
 								ParseJSON(&hjsondata, json_str);
+								JSONToFlash(&hjsondata, &hflash);
+								SaveFash();
 								netconn_write(newconn, PAGE_HEADER,
 										strlen((char* )PAGE_HEADER),
 										NETCONN_COPY);
 								vPortFree(json_str);
 							}
+						} else if (strncmp((char const *) buf, "cmd.reboot=1",
+								12) == 0) {
+							netconn_write(newconn, PAGE_HEADER,
+									strlen((char* )PAGE_HEADER), NETCONN_COPY);
+							LogText(SUB_SYS_WEB, LOG_LEV_INFO, "Reboot");
+							reboot_flag = 1;
 						} else {
 							fs_open(&file, "/404.html");
 							netconn_write(newconn,
 									(const unsigned char* )(file.data),
 									(size_t )file.len, NETCONN_NOCOPY);
 							fs_close(&file);
-							printf("File not found\n");
 							osDelay(1);
 						}
 					}

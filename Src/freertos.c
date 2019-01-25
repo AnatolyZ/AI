@@ -86,6 +86,7 @@ xQueueHandle cleaner_queue;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+extern volatile int reboot_flag;
 extern struct netif gnetif;
 typedef struct struct_sock_t {
 	struct netconn * conn;
@@ -223,7 +224,7 @@ void StartDefaultTask(void const * argument)
 	struct netconn *conn_port102;
 	conn_port102 = netconn_new(NETCONN_TCP);
 	if (conn_port102 != NULL) {
-		err = netconn_bind(conn_port102, IP_ADDR_ANY, 102);
+		err = netconn_bind(conn_port102, IP_ADDR_ANY, hflash.port);
 		if (err == ERR_OK) {
 			netconn_listen(conn_port102);
 			sys_thread_new("tcp_serv_thread", Client_thread, (void*) conn_port102,
@@ -246,6 +247,11 @@ void StartDefaultTask(void const * argument)
 		printf("Free heap: %d\r\n",xPortGetMinimumEverFreeHeapSize());
 		osDelay(500);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
+		if (reboot_flag){
+			osDelay(30);
+			SCB->AIRCR = 0x05FA0004; /* Software reset */
+		}
+
 	}
   /* USER CODE END StartDefaultTask */
 }

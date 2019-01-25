@@ -16,6 +16,7 @@
 #include "string.h"
 #include "processUART.h"
 #include "tcp_client.h"
+#include "iwdg.h"
 /* -------- */
 
 /* Type definitions */

@@ -82,6 +82,12 @@ static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 	if (tel->FC == 0x49) {
 		SendNoDataMsg(tel->SA, tel->DA, 0x20);
 		hprot.master_address = tel->SA;
+
+		if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+		  {
+		    Error_Handler();
+		  }
+
 	}
 	return NO_ERR;
 }

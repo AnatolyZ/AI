@@ -133,7 +133,7 @@ void DecodeURL(uint8_t *buf, uint8_t *result) {
 			}
 			if ((*(buf + 1) == '7') && (*(buf + 2) == 'D')) {
 				*result = '}';
-				*(result+1) = '\0';
+				*(result + 1) = '\0';
 				break;
 			}
 		} else {
@@ -193,4 +193,48 @@ void ParseJSON(json_data_t *js, uint8_t *json_str) {
 		}
 	}
 
+}
+
+void JSONToFlash(json_data_t *js, flash_data_t *fs) {
+	ip4_addr_t new_ip;
+	union {
+		uint32_t ui32;
+		uint8_t ui8[4];
+	} tmp_u;
+
+	ipaddr_aton((char*)js->ip_addr, &new_ip);
+	tmp_u.ui32 = new_ip.addr;
+	fs->IP_addr[0] = tmp_u.ui8[0];
+	fs->IP_addr[1] = tmp_u.ui8[1];
+	fs->IP_addr[2] = tmp_u.ui8[2];
+	fs->IP_addr[3] = tmp_u.ui8[3];
+
+	ipaddr_aton((char*)js->gate, &new_ip);
+	tmp_u.ui32 = new_ip.addr;
+	fs->gate[0] = tmp_u.ui8[0];
+	fs->gate[1] = tmp_u.ui8[1];
+	fs->gate[2] = tmp_u.ui8[2];
+	fs->gate[3] = tmp_u.ui8[3];
+
+	ipaddr_aton((char*)js->mask, &new_ip);
+	tmp_u.ui32 = new_ip.addr;
+	fs->mask[0] = tmp_u.ui8[0];
+	fs->mask[1] = tmp_u.ui8[1];
+	fs->mask[2] = tmp_u.ui8[2];
+	fs->mask[3] = tmp_u.ui8[3];
+	uint8_t *ptr = js->mac_addr;
+	for (int i = 0; i < 6; i++) {
+		uint8_t tok[3];
+		int j = 0;
+		while (j < 2 && *ptr != '-') {
+			tok[j++] = *ptr++;
+		}
+		ptr++;
+		tok[j] = '\0';
+		fs->mac_addr[i] = strtol((char*)tok, NULL, 16);
+	}
+	fs->own_addr = js->own_addr;
+	fs->port = js->port;
+	fs->serial_num = js->serial_num;
+	fs->speed = js->speed;
 }

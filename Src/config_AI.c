@@ -63,8 +63,7 @@ void FlashInit() {
 	/*baud rate */
 	EE_ReadVariable(BR_MS_ADDR, &tmp_u.ui16[1]);
 	EE_ReadVariable(BR_LS_ADDR, &tmp_u.ui16[0]);
-	huart5.Init.BaudRate = tmp_u.ui32;
-	hflash.speed = huart5.Init.BaudRate;
+	hflash.speed = tmp_u.ui32;
 	/* IP-address */
 	EE_ReadVariable(IP_02_01_ADDR, &tmp_u.ui16[0]);
 	EE_ReadVariable(IP_04_03_ADDR, &tmp_u.ui16[1]);
@@ -109,4 +108,57 @@ void FlashInit() {
 	hflash.ver[1] = VER2;
 	hflash.ver[2] = VER3;
 	/* ------------------------------------------------------- */
+}
+
+void SaveFash(void) {
+	union {
+		uint32_t ui32;
+		uint16_t ui16[2];
+		uint8_t ui8[4];
+	} tmp_u;
+
+	/*baud rate */
+
+	tmp_u.ui32 = hflash.speed ;
+	EE_WriteVariable(BR_MS_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(BR_LS_ADDR, tmp_u.ui16[0]);
+	/* IP-address */
+	tmp_u.ui8[0] = hflash.IP_addr[0];
+	tmp_u.ui8[1] = hflash.IP_addr[1];
+	tmp_u.ui8[2] = hflash.IP_addr[2];
+	tmp_u.ui8[3] = hflash.IP_addr[3];
+	EE_WriteVariable(IP_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(IP_04_03_ADDR, tmp_u.ui16[1]);
+	/* MPI/Profibus address */
+	EE_WriteVariable(MPI_ADRR_ADDR, hflash.own_addr);
+	/* Subnet mask */
+	tmp_u.ui8[0] = hflash.mask[0];
+	tmp_u.ui8[1] = hflash.mask[1];
+	tmp_u.ui8[2] = hflash.mask[2];
+	tmp_u.ui8[3] = hflash.mask[3];
+	EE_WriteVariable(MASK_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(MASK_04_03_ADDR, tmp_u.ui16[1]);
+	/* Gateway */
+	tmp_u.ui8[0] = hflash.gate[0];
+	tmp_u.ui8[1] = hflash.gate[1];
+	tmp_u.ui8[2] = hflash.gate[2];
+	tmp_u.ui8[3] = hflash.gate[3];
+	EE_WriteVariable(GATE_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(GATE_04_03_ADDR, tmp_u.ui16[1]);
+	/* Port number */
+	EE_WriteVariable(PORT_ADRR, hflash.port);
+	/* Serial number */
+	tmp_u.ui32 = hflash.serial_num;
+	EE_WriteVariable(SN_MS_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(SN_LS_ADDR, tmp_u.ui16[0]);
+	/* MAC address */
+	tmp_u.ui8[0] = hflash.mac_addr[0];
+	tmp_u.ui8[1] = hflash.mac_addr[1];
+	tmp_u.ui8[2] = hflash.mac_addr[2];
+	tmp_u.ui8[3] = hflash.mac_addr[3];
+	EE_WriteVariable(MAC_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(MAC_04_03_ADDR, tmp_u.ui16[1]);
+	tmp_u.ui8[0] = hflash.mac_addr[4];
+	tmp_u.ui8[1] = hflash.mac_addr[5];
+	EE_WriteVariable(MAC_06_05_ADDR, tmp_u.ui16[0]);
 }
