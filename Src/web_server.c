@@ -43,7 +43,6 @@ void Web_thread(void *arg) {
 	for (;;) {
 		err = netconn_accept(arg_conn, &newconn);
 		if (err == ERR_OK) {
-			printf("Accept.\n");
 			recv_err = netconn_recv(newconn, &inbuf);
 			if (recv_err == ERR_OK) {
 				if (netconn_err(newconn) == ERR_OK) {

@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
@@ -110,7 +110,8 @@ extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
+		StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
 
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
@@ -144,25 +145,25 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 /* USER CODE END GET_IDLE_TASK_MEMORY */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
 void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
 
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
 	osThreadDef(processTask, StartProcessTask, osPriorityRealtime, 0, 1024);
 	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
@@ -170,27 +171,27 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0,
 			256);
 	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
-  /* USER CODE END RTOS_TIMERS */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+	/* Create the thread(s) */
+	/* definition and creation of defaultTask */
+	osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
+	/* USER CODE BEGIN RTOS_THREADS */
 
-  /* USER CODE END RTOS_THREADS */
+	/* USER CODE END RTOS_THREADS */
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+	/* USER CODE BEGIN RTOS_QUEUES */
 	frames_queue = xQueueCreate(16, sizeof(uint16_t));
-	vQueueAddToRegistry(frames_queue,"frames_queue");
+	vQueueAddToRegistry(frames_queue, "frames_queue");
 	cleaner_queue = xQueueCreate(16, sizeof(uint8_t*));
-	vQueueAddToRegistry(cleaner_queue,"cleaner_queue");
+	vQueueAddToRegistry(cleaner_queue, "cleaner_queue");
 	tcp_client_queue = xQueueCreate(8, sizeof(parcel_t));
-	vQueueAddToRegistry(tcp_client_queue,"tcp_client_queue");
+	vQueueAddToRegistry(tcp_client_queue, "tcp_client_queue");
 	protocol_queue = xQueueCreate(8, sizeof(parcel_t));
-	vQueueAddToRegistry(protocol_queue,"protocol_queue");
-  /* USER CODE END RTOS_QUEUES */
+	vQueueAddToRegistry(protocol_queue, "protocol_queue");
+	/* USER CODE END RTOS_QUEUES */
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -200,12 +201,11 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for LWIP */
-  MX_LWIP_Init();
+void StartDefaultTask(void const * argument) {
+	/* init code for LWIP */
+	MX_LWIP_Init();
 
-  /* USER CODE BEGIN StartDefaultTask */
+	/* USER CODE BEGIN StartDefaultTask */
 
 	struct netconn *conn_port80;
 	err_t err;
@@ -227,14 +227,16 @@ void StartDefaultTask(void const * argument)
 		err = netconn_bind(conn_port102, IP_ADDR_ANY, hflash.port);
 		if (err == ERR_OK) {
 			netconn_listen(conn_port102);
-			sys_thread_new("tcp_serv_thread", Client_thread, (void*) conn_port102,
-			DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
+			sys_thread_new("tcp_serv_thread", Client_thread,
+					(void*) conn_port102,
+					DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
 		} else {
 			netconn_delete(conn_port102);
 		}
 	}
 
-	uint8_t data_conn1[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01, 0x00 };
+	uint8_t data_conn1[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01,
+			0x00 };
 	uint8_t * request_data;
 	request_data = (uint8_t*) pvPortMalloc(sizeof(data_conn1));
 	memcpy(request_data, data_conn1, sizeof(data_conn1));
@@ -244,16 +246,19 @@ void StartDefaultTask(void const * argument)
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
-		printf("Free heap: %d\r\n",xPortGetMinimumEverFreeHeapSize());
+
+#ifdef DEBUG_ON
+		printf("Free heap: %d\r\n", xPortGetMinimumEverFreeHeapSize());
+#endif /* #ifdef DEBUG_ON */
 		osDelay(500);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
-		if (reboot_flag){
+		if (reboot_flag) {
 			osDelay(30);
 			SCB->AIRCR = 0x05FA0004; /* Software reset */
 		}
 
 	}
-  /* USER CODE END StartDefaultTask */
+	/* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
