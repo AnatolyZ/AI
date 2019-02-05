@@ -25,6 +25,8 @@
 
 /* Function prototypes */
 void TestCalculateFCS();
+void TestGetNextMaster();
+void TestCheckMaster();
 /* ------------------- */
 
 #endif /* TEST_PROTOCOL_H_ */

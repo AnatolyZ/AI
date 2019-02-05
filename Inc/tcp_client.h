@@ -22,6 +22,7 @@
 typedef struct parcel{
 	uint8_t * data;
 	uint16_t len;
+	uint8_t dest_addr;
 } parcel_t;
 
 extern xQueueHandle tcp_client_queue;

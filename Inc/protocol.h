@@ -63,9 +63,10 @@ typedef struct {
 	uint32_t speed; /* Baud rate */
 	uint8_t* data_ptr; /* Pointer to data to send */
 	volatile uint8_t data_len; /* Data length */
-	volatile uint8_t master_address; /* Master address */
-	volatile uint8_t master_SAP; /* Master SAP */
-	uint8_t req_num;
+	volatile uint8_t master_SAP; /* Master SAP (connected to AI)*/
+	volatile uint8_t master_address; /* Master address (connected to AI)*/
+	uint8_t req_num;  /* request number */
+	volatile uint32_t bus_masters;  /* Bit-matrix of masters on bus */
 } profibus_MPI_t;
 /* ------------------- */
 
@@ -78,6 +79,8 @@ extern profibus_MPI_t hprot;
 void ProtocolSettingsInit(profibus_MPI_t* hp);
 uint8_t CalculateFCS(uint8_t * buf, uint8_t len);
 error_t CommandParser(uint8_t *buf);
+uint8_t GetNextMaster(profibus_MPI_t *prot);
+uint8_t CheckMaster(profibus_MPI_t *prot, uint8_t master);
 /* ------------------- */
 
 #endif /* PROTOCOL_H_ */

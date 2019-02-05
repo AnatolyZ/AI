@@ -27,3 +27,4 @@ v0.4.0  - Add reboot button (Web-page);
 		- Process reboot cmd (Web-server);
 		- Add watchdog (Core);
 		- Init sustem from flash data (Core);
+v0.5.0  - Multy-master mode fixed;		

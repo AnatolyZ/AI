@@ -17,6 +17,7 @@ static inline error_t TokenCmdProcessing(telegram_t * tel);
 static inline error_t NoDataCmdProcessing(telegram_t * tel);
 static inline error_t VarDataCmdProcessing(telegram_t * tel);
 static inline error_t FixDataCmdProcessing(telegram_t * tel);
+static inline void AddMaster(profibus_MPI_t *prot, uint8_t new_master);
 /* ------------------- */
 
 /* ---------- FUNCTIONS ------------ */
@@ -32,6 +33,8 @@ void ProtocolSettingsInit(profibus_MPI_t* hp) {
 	hp->wait_for_answer = 0U;
 	hp->data_ptr = NULL;
 	hp->data_len = 0U;
+	hp->bus_masters = 0x00U;
+	AddMaster(hp, hp->own_address);
 }
 
 uint8_t CalculateFCS(uint8_t * buf, uint8_t len) {
@@ -44,33 +47,36 @@ uint8_t CalculateFCS(uint8_t * buf, uint8_t len) {
 
 static inline error_t TokenCmdProcessing(telegram_t * tel) {
 	parcel_t parc;
-	if ((hprot.conn_stat == CONN_CLOSE) && (hprot.confirm_status != CONF_NEED08)) {
-		SendClosemMsg(tel->SA, hprot.own_address);
+	hprot.token_possession = 1U;
+	if ((hprot.conn_stat == CONN_CLOSE)
+			&& (hprot.confirm_status != CONF_NEED08)) {
+		SendClosemMsg(hprot.master_address, hprot.own_address);
 	} else if (hprot.confirm_status == CONF_NEED07) {
-		SendConfirmMsg(tel->SA, hprot.own_address, 0x07, 0x5C);
+		SendConfirmMsg(hprot.master_address, hprot.own_address, 0x07, 0x5C);
 	} else if (hprot.confirm_status == CONF_NEED08) {
-		SendConfirmMsg(tel->SA, hprot.own_address, 0x08, 0x5C);
+		SendConfirmMsg(hprot.master_address, hprot.own_address, 0x08, 0x5C);
 	} else if (hprot.confirm_status == CONF_NEED07_AGAIN) {
-		SendConfirmMsg(tel->SA, hprot.own_address, 0x07, 0x7C);
+		SendConfirmMsg(hprot.master_address, hprot.own_address, 0x07, 0x7C);
 	} else {
 		if (xQueuePeek(tcp_client_queue,&parc,0) != pdPASS) {
-			SendTokenMsg(tel->SA, hprot.own_address);
+
+			SendTokenMsg(GetNextMaster(&hprot), hprot.own_address);
 			hprot.token_possession = 0U;
 		} else {
-			hprot.token_possession = 1U;
 			if (hprot.conn_stat == CONN_OK) {
 				parc.data = NULL;
 				xQueueReceive(tcp_client_queue, &parc, 0);
-				SendRequestMsg(tel->SA, hprot.own_address, parc.data, parc.len);
+				SendRequestMsg(hprot.master_address, hprot.own_address,
+						parc.data, parc.len);
 				if (parc.data != NULL) {
 					vPortFree(parc.data);
 				}
 			} else if (hprot.conn_stat == CONN_NO) {
-				SendConnectMsg(tel->SA, hprot.own_address, 0x6D);
+				SendConnectMsg(hprot.master_address, hprot.own_address, 0x6D);
 			} else if (hprot.conn_stat == CONN_AGAIN) {
-				SendConnectMsg(tel->SA, hprot.own_address, 0x5D);
+				SendConnectMsg(hprot.master_address, hprot.own_address, 0x5D);
 			} else {
-				SendTokenMsg(tel->SA, hprot.own_address);
+				SendTokenMsg(GetNextMaster(&hprot), hprot.own_address);
 				hprot.token_possession = 0U;
 			}
 		}
@@ -81,13 +87,11 @@ static inline error_t TokenCmdProcessing(telegram_t * tel) {
 static inline error_t NoDataCmdProcessing(telegram_t * tel) {
 	if (tel->FC == 0x49) {
 		SendNoDataMsg(tel->SA, tel->DA, 0x20);
-		hprot.master_address = tel->SA;
-
-		if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
-		  {
-		    Error_Handler();
-		  }
-
+#ifdef WATCH_DOG_ON
+		if (HAL_IWDG_Init(&hiwdg) != HAL_OK) {
+			Error_Handler();
+		}
+#endif /* #ifdef WATCH_DOG_ON */
 	}
 	return NO_ERR;
 }
@@ -111,10 +115,9 @@ static inline error_t VarDataCmdProcessing(telegram_t * tel) {
 		SendAckMsg();
 	} else if (tel->UK1 == 0xB0) {
 		SendAckMsg();
-	} else if (tel->UK1 == 0xC0){
+	} else if (tel->UK1 == 0xC0) {
 		/* No ACK */
-	}
-	else if ((tel->FC == 0x7C) || (tel->FC == 0x5C)) {
+	} else if ((tel->FC == 0x7C) || (tel->FC == 0x5C)) {
 		parcel_t parc;
 		parc.len = tel->LE - 7;
 		parc.data = pvPortMalloc(parc.len);
@@ -122,10 +125,9 @@ static inline error_t VarDataCmdProcessing(telegram_t * tel) {
 		xQueueSend(protocol_queue, &parc, 0);
 		hprot.confirm_status = CONF_NEED08;
 		SendAckMsg();
-	}  else {
+	} else {
 		SendAckMsg();
 	}
-
 
 	if (tel->PDU != NULL) {
 		vPortFree(tel->PDU);
@@ -140,16 +142,23 @@ static inline error_t FixDataCmdProcessing(telegram_t * tel) {
 }
 
 error_t CommandParser(uint8_t *buf) {
+	static uint8_t skip_first = 1;
 	static telegram_t htel;
+	uint8_t size = buf[SIZE_OF_CMD_BUF - 1];
 	htel.SD = *buf++;
 	switch (htel.SD) {
 	case 0xDC: /* Token  */
 		/* Format: |SD4|DA|SA|*/
+		if (size != 3) {
+			return SIZE_ERR;
+		}
 		htel.DA = *buf++;
+		htel.SA = *buf;
+		AddMaster(&hprot, htel.DA);
+		AddMaster(&hprot, htel.SA);
 		if (htel.DA != hprot.own_address) {
 			return NO_ERR;
 		}
-		htel.SA = *buf;
 		return TokenCmdProcessing(&htel);
 		break;
 	case 0x10: /* No data */
@@ -158,14 +167,22 @@ error_t CommandParser(uint8_t *buf) {
 			return FCS_ERR;
 		}
 		htel.DA = *buf++;
+		htel.SA = *buf++;
+		htel.FC = *buf++;
+		if (htel.FC == 0x20){
+			AddMaster(&hprot, htel.SA);
+		}
 		if (htel.DA != hprot.own_address) {
 			return NO_ERR;
 		}
-		htel.SA = *buf++;
-		htel.FC = *buf++;
 		htel.FCS = *buf++;
 		htel.ED = *buf;
-		return NoDataCmdProcessing(&htel);
+		if (skip_first) {
+			skip_first = 0;
+			return NO_ERR;
+		} else {
+			return NoDataCmdProcessing(&htel);
+		}
 		break;
 	case 0x68:
 		/* Variable length data */
@@ -227,12 +244,44 @@ error_t CommandParser(uint8_t *buf) {
 		break;
 	case 0xE5:
 		/* Acknowledgment */
-		SendTokenMsg(htel.SA, hprot.own_address);
-		hprot.token_possession = 0U;
+		if (hprot.token_possession == 1U) {
+			SendTokenMsg(GetNextMaster(&hprot), hprot.own_address);
+			hprot.token_possession = 0U;
+		}
 		return NO_ERR;
 		break;
 	default:
 		return UNKNOWN_SD_ERR;
 	}
 	return NO_ERR;
+}
+
+static inline void AddMaster(profibus_MPI_t *prot, uint8_t new_master) {
+	prot->bus_masters |= (0x01U << new_master);
+}
+
+uint8_t GetNextMaster(profibus_MPI_t *prot) {
+	uint8_t pos = prot->own_address;
+
+	for (int i = 0; i < 32; i++) {
+		pos++;
+		if (pos == 32) {
+			pos = 0;
+		}
+		if (((0x01U << pos) & prot->bus_masters) != 0x00) {
+			return pos;
+		}
+	}
+	return prot->own_address;
+}
+
+uint8_t CheckMaster(profibus_MPI_t *prot, uint8_t master) {
+	if (master == prot->own_address) {
+		return 0U;
+	}
+	if (((0x01U << master) & prot->bus_masters) != 0x00) {
+		return 1U;
+	} else {
+		return 0U;
+	}
 }
