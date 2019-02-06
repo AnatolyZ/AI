@@ -154,8 +154,12 @@ error_t CommandParser(uint8_t *buf) {
 		}
 		htel.DA = *buf++;
 		htel.SA = *buf;
+
 		AddMaster(&hprot, htel.DA);
+		/*
+		 * fixed in v0.6.1
 		AddMaster(&hprot, htel.SA);
+		*/
 		if (htel.DA != hprot.own_address) {
 			return NO_ERR;
 		}
