@@ -112,6 +112,19 @@ void MX_LWIP_Init(void) {
 	netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init,
 			&tcpip_input);
 
+	uint32_t reg;
+	do {
+		HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &reg);
+		{
+			if (reg & PHY_LINKED_STATUS) {
+				netif_set_link_up(&gnetif);
+			} else {
+				netif_set_link_down(&gnetif);
+			}
+		}
+		osDelay(1000);
+	} while (!(reg & PHY_LINKED_STATUS));
+
 	/* Registers the default network interface */
 	netif_set_default(&gnetif);
 

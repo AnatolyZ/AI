@@ -203,12 +203,14 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument) {
 	/* init code for LWIP */
+
 	MX_LWIP_Init();
 
 	/* USER CODE BEGIN StartDefaultTask */
 
 	struct netconn *conn_port80;
 	err_t err;
+	uint32_t reg;
 	conn_port80 = netconn_new(NETCONN_TCP);
 	if (conn_port80 != NULL) {
 		err = netconn_bind(conn_port80, IP_ADDR_ANY, 80);
@@ -250,9 +252,11 @@ void StartDefaultTask(void const * argument) {
 #ifdef DEBUG_ON
 		printf("Free heap: %d\r\n", xPortGetMinimumEverFreeHeapSize());
 #endif /* #ifdef DEBUG_ON */
-		osDelay(500);
+
+		osDelay(300);
+		HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &reg);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
-		if (reboot_flag) {
+		if (reboot_flag || !(reg & PHY_LINKED_STATUS)) {
 			osDelay(30);
 			SCB->AIRCR = 0x05FA0004; /* Software reset */
 		}
