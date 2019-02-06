@@ -243,6 +243,8 @@ void StartProcessTask(void const * argument) {
 		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
 				"Circular buffer allocation error.\r\n");
 	}
+	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);
+	osDelay(7000 + hprot.own_address*100);            /* ver 0.6.3 */
 	HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 	for (;;) {
 		xQueueReceive(frames_queue, &len, portMAX_DELAY);
