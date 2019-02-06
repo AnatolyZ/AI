@@ -13,8 +13,8 @@
 /* Firmware version: VER1.VER2.VER3 */
 #define VER1 0
 #define VER2 6
-#define VER3 1
-/* Current version 0.6.1 */
+#define VER3 2
+/* Current version 0.6.2 */
 
 typedef struct {
 	uint32_t speed;
