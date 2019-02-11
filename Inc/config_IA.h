@@ -12,8 +12,8 @@
 
 /* Firmware version: VER1.VER2.VER3 */
 #define VER1 0
-#define VER2 6
-#define VER3 3
+#define VER2 7
+#define VER3 0
 /* Current version 0.6.3 */
 
 typedef struct {
@@ -26,6 +26,7 @@ typedef struct {
 	uint32_t serial_num;
 	uint16_t ver[3];
 	uint8_t mac_addr[6];
+	uint16_t web_port;
 } flash_data_t;
 
 

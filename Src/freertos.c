@@ -213,7 +213,7 @@ void StartDefaultTask(void const * argument) {
 	uint32_t reg;
 	conn_port80 = netconn_new(NETCONN_TCP);
 	if (conn_port80 != NULL) {
-		err = netconn_bind(conn_port80, IP_ADDR_ANY, 80);
+		err = netconn_bind(conn_port80, IP_ADDR_ANY, hflash.web_port);
 		if (err == ERR_OK) {
 			netconn_listen(conn_port80);
 			sys_thread_new("web_thread", Web_thread, (void*) conn_port80,
@@ -245,7 +245,6 @@ void StartDefaultTask(void const * argument) {
 	hprot.data_len = sizeof(data_conn1);
 	hprot.data_ptr = request_data;
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for (;;) {
 

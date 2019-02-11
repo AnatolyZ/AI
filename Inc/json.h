@@ -33,6 +33,7 @@ typedef struct json_data {
 	uint8_t ver[12];
 	uint32_t serial_num;
 	uint8_t mac_addr[18];
+	uint16_t web_port;
 } json_data_t;
 /* ------------------- */
 

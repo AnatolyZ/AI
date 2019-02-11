@@ -62,8 +62,12 @@ uint GetJSONData(uint8_t *pstr) {
 	tmp = strlen((const char *) hjsondata.mac_addr);
 	memcpy(pstr + size, hjsondata.mac_addr, tmp);
 	size += tmp;
-	memcpy(pstr + size, "\"}\0", 3);
-	size += 3;
+	memcpy(pstr + size, "\",\"web_port\":", 13);
+	size += 13;
+	itoa(hjsondata.web_port, (char *) pstr + size, 10);
+	size += strlen((const char *) pstr + size);
+	memcpy(pstr + size, "}\0", 2);
+	size += 2;
 	return size;
 }
 
@@ -71,6 +75,7 @@ void FlashToJSON(json_data_t *js, flash_data_t *fs) {
 
 	js->speed = fs->speed;
 	js->port = fs->port;
+	js->web_port = fs->web_port;
 	js->own_addr = fs->own_addr;
 	js->serial_num = fs->serial_num;
 	uint len = 0;
@@ -187,6 +192,8 @@ void ParseJSON(json_data_t *js, uint8_t *json_str) {
 					}
 				} else if (strcmp((char*) Prev_keyString, "addr_MAC") == 0) {
 					strcpy((char*) js->mac_addr, (char*) keyString);
+				} else if (strcmp((char*) Prev_keyString, "web_port") == 0) {
+					js->web_port = (uint16_t) atoi((char*) keyString);
 				}
 				strcpy((char*) Prev_keyString, (char*) keyString);
 			}
@@ -202,21 +209,21 @@ void JSONToFlash(json_data_t *js, flash_data_t *fs) {
 		uint8_t ui8[4];
 	} tmp_u;
 
-	ipaddr_aton((char*)js->ip_addr, &new_ip);
+	ipaddr_aton((char* )js->ip_addr, &new_ip);
 	tmp_u.ui32 = new_ip.addr;
 	fs->IP_addr[0] = tmp_u.ui8[0];
 	fs->IP_addr[1] = tmp_u.ui8[1];
 	fs->IP_addr[2] = tmp_u.ui8[2];
 	fs->IP_addr[3] = tmp_u.ui8[3];
 
-	ipaddr_aton((char*)js->gate, &new_ip);
+	ipaddr_aton((char* )js->gate, &new_ip);
 	tmp_u.ui32 = new_ip.addr;
 	fs->gate[0] = tmp_u.ui8[0];
 	fs->gate[1] = tmp_u.ui8[1];
 	fs->gate[2] = tmp_u.ui8[2];
 	fs->gate[3] = tmp_u.ui8[3];
 
-	ipaddr_aton((char*)js->mask, &new_ip);
+	ipaddr_aton((char* )js->mask, &new_ip);
 	tmp_u.ui32 = new_ip.addr;
 	fs->mask[0] = tmp_u.ui8[0];
 	fs->mask[1] = tmp_u.ui8[1];
@@ -231,10 +238,11 @@ void JSONToFlash(json_data_t *js, flash_data_t *fs) {
 		}
 		ptr++;
 		tok[j] = '\0';
-		fs->mac_addr[i] = strtol((char*)tok, NULL, 16);
+		fs->mac_addr[i] = strtol((char*) tok, NULL, 16);
 	}
 	fs->own_addr = js->own_addr;
 	fs->port = js->port;
+	fs->web_port = js->web_port;
 	fs->serial_num = js->serial_num;
 	fs->speed = js->speed;
 }

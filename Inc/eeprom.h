@@ -99,7 +99,7 @@
 #define PAGE_FULL             ((uint8_t)0x80)
 
 /* Variables' number */
-#define NB_OF_VAR             ((uint8_t)19)
+#define NB_OF_VAR             ((uint8_t)20)
 
 
 
@@ -121,6 +121,7 @@
 #define 		DEFAULT_MAC_02_01 	0x0200
 #define 		DEFAULT_MAC_04_03	0x42A2	 /* Hilscher_42:50:e4 (00:02:a2:42:50:e4) */
 #define 		DEFAULT_MAC_06_05 	0xE450
+#define 		DEFAULT_WEB_PORT 	0xBF67   /* Default web_port address */
 
 /* Exported functions ------------------------------------------------------- */
 uint16_t EE_Init(void);
@@ -146,6 +147,7 @@ uint16_t EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
 #define 		MAC_02_01_ADDR 		16
 #define 		MAC_04_03_ADDR		17
 #define 		MAC_06_05_ADDR 		18
+#define 		WEB_PORT_ADRR		19
 
 #endif /* __EEPROM_H */
 

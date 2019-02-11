@@ -30,18 +30,7 @@ void Client_thread(void *arg) {
 			while (err == ERR_OK) {
 				do {
 					netbuf_data(inbuf, (void**) &buf, &buflen);
-					if ((buf[0] == 0x03) && (buf[1] == 0x00) && (buf[2] == 0x00)
-							&& (buf[3] == 0x16) && (CheckMaster(&hprot,buf[21]))) {
-						data_COTP[18] = buf[21];
-						hprot.master_address = buf[21];
-						netconn_write(newconn,
-								(const unsigned char* )(data_COTP),
-								sizeof(data_COTP), NETCONN_COPY);
-						if (hprot.conn_stat == CONN_CLOSED) {
-							hprot.conn_stat = CONN_AGAIN;
-						}
-						hprot.req_num = 0;
-					} else if (buf[7] == 0x32) {
+					if (buf[7] == 0x32) {
 						parcel_t parc;
 						parc.len = buflen - 7;
 						parc.data = pvPortMalloc(parc.len);
@@ -62,6 +51,17 @@ void Client_thread(void *arg) {
 						netconn_write(newconn, (const unsigned char* )(answer),
 								parc.len + 7, NETCONN_COPY);
 						vPortFree(answer);
+					} else if ((buf[0] == 0x03) && (buf[1] == 0x00) && (buf[2] == 0x00)
+							&& (buf[3] == 0x16) && (CheckMaster(&hprot,buf[21]))) {
+						data_COTP[18] = buf[21];
+						hprot.master_address = buf[21];
+						netconn_write(newconn,
+								(const unsigned char* )(data_COTP),
+								sizeof(data_COTP), NETCONN_COPY);
+						if (hprot.conn_stat == CONN_CLOSED) {
+							hprot.conn_stat = CONN_AGAIN;
+						}
+						hprot.req_num = 0;
 					}
 				} while (netbuf_next(inbuf) >= 0);
 				netbuf_delete(inbuf);

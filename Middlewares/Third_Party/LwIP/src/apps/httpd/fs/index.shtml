@@ -14,6 +14,7 @@
 		ver: "0.0.0",
 		sn: 0,
 		addr_MAC: "AA-BB-CC-DD-EE-FF",
+		web_port: 8088,
 	}
     var xhr1;
 	function onload(){		
@@ -27,6 +28,7 @@
 			document.getElementById('Subnet_addr').value = AI_data.mask;
 			document.getElementById('Gateway').value = AI_data.gate;
 			document.getElementById('Port_num').value = AI_data.port;
+			document.getElementById('Web_port_num').value = AI_data.web_port;
 			document.getElementById('Speed').value = AI_data.speed;
 			document.getElementById('Addr_own').value = AI_data.addr_own;
 			document.getElementById('Addr_MAC').value = AI_data.addr_MAC;
@@ -44,6 +46,7 @@
 			AI_data.mask = document.getElementById('Subnet_addr').value;
 			AI_data.gate = document.getElementById('Gateway').value;
 			AI_data.port = document.getElementById('Port_num').value;
+			AI_data.web_port = document.getElementById('Web_port_num').value;
 			AI_data.speed = document.getElementById('Speed').value;
 			AI_data.addr_own = document.getElementById('Addr_own').value;			
 			AI_data.addr_MAC = document.getElementById('Addr_MAC').value;
@@ -104,10 +107,15 @@
 					</td>
 				</tr>		
 				<tr>
-					<td>Номер порта</td>
+					<td>Номер порта адаптера</td>
 					<td align = "center" ><input id = "Port_num" type="text"></td>
 					</td>
-				</tr>					
+				</tr>				
+				<tr>
+					<td>Номер порта Web-интерфейса</td>
+					<td align = "center" ><input id = "Web_port_num" type="text"></td>
+					</td>
+				</tr>	
 				<tr>
 					<td>Скорость обмена, Бод</td>
 					<td align = "center" ><input id = "Speed" type="text"></td>
