@@ -87,12 +87,12 @@ xQueueHandle cleaner_queue;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 extern volatile int reboot_flag;
-extern struct netif gnetif;
 typedef struct struct_sock_t {
 	struct netconn * conn;
 } struct_sock;
 struct_sock sock01;
 osThreadId processTaskHandle;
+osThreadId conn_creatorHandle;
 osThreadId heapCleanerHandle;
 
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
@@ -102,6 +102,7 @@ osThreadId defaultTaskHandle;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void StartHeapCleanerTask(void const * argument);
+void StartCreatorTask(void const * argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -165,12 +166,7 @@ void MX_FREERTOS_Init(void) {
 
 	/* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	osThreadDef(processTask, StartProcessTask, osPriorityRealtime, 0, 1024);
-	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
 
-	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0,
-			256);
-	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
 	/* USER CODE END RTOS_TIMERS */
 
 	/* Create the thread(s) */
@@ -179,7 +175,15 @@ void MX_FREERTOS_Init(void) {
 	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
 	/* USER CODE BEGIN RTOS_THREADS */
+	osThreadDef(processTask, StartProcessTask, osPriorityRealtime, 0, 1024);
+	processTaskHandle = osThreadCreate(osThread(processTask), NULL);
 
+	osThreadDef(conn_creatorTask, StartCreatorTask, osPriorityNormal, 0, 1024);
+	conn_creatorHandle = osThreadCreate(osThread(conn_creatorTask), NULL);
+
+	osThreadDef(cleanerTask, StartHeapCleanerTask, osPriorityAboveNormal, 0,
+			256);
+	heapCleanerHandle = osThreadCreate(osThread(cleanerTask), NULL);
 	/* USER CODE END RTOS_THREADS */
 
 	/* USER CODE BEGIN RTOS_QUEUES */
@@ -223,35 +227,10 @@ void StartDefaultTask(void const * argument) {
 		}
 	}
 
-	struct netconn *conn_port102;
-	conn_port102 = netconn_new(NETCONN_TCP);
-	if (conn_port102 != NULL) {
-		err = netconn_bind(conn_port102, IP_ADDR_ANY, hflash.port);
-		if (err == ERR_OK) {
-			netconn_listen(conn_port102);
-			sys_thread_new("tcp_serv_thread", Client_thread,
-					(void*) conn_port102,
-					DEFAULT_THREAD_STACKSIZE, osPriorityAboveNormal);
-		} else {
-			netconn_delete(conn_port102);
-		}
-	}
-
-	uint8_t data_conn1[] = { 0x80, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x01,
-			0x00 };
-	uint8_t * request_data;
-	request_data = (uint8_t*) pvPortMalloc(sizeof(data_conn1));
-	memcpy(request_data, data_conn1, sizeof(data_conn1));
-	hprot.data_len = sizeof(data_conn1);
-	hprot.data_ptr = request_data;
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+
 	/* Infinite loop */
 	for (;;) {
-
-#ifdef DEBUG_ON
-		printf("Free heap: %d\r\n", xPortGetMinimumEverFreeHeapSize());
-#endif /* #ifdef DEBUG_ON */
-
 		osDelay(300);
 		HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &reg);
 		HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
@@ -266,6 +245,77 @@ void StartDefaultTask(void const * argument) {
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+void StartCreatorTask(void const * argument) {
+	struct netconn *conn_port102;
+	err_t accept_err, err;
+	uint8_t state = 0, run = 1;
+	conn_port102 = netconn_new(NETCONN_TCP); /* Create a new TCP connection handle */
+	if (conn_port102 != NULL) {
+		state++;
+		LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
+				"New TCP connection on port 102 created.\r\n");
+	}
+	for (;;) {
+		while (run) {
+			switch (state) {
+			case 0: {
+				conn_port102 = netconn_new(NETCONN_TCP); /* Create a new TCP connection handle */
+				if (conn_port102 != NULL) {
+					state++;
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
+							"New TCP connection on port 102 created.\r\n");
+				} else {
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_ERR,
+							"Can not create TCP connection on port 102.\r\n");
+				}
+				break;
+			}
+			case 1: {
+				err = netconn_bind(conn_port102, IP_ADDR_ANY, hflash.port); /* Bind to port with default IP address */
+				if (err == ERR_OK) {
+					state++;
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
+							"Binded successfully to port 102.\r\n");
+				} else {
+					netconn_delete(conn_port102);
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_ERR,
+							"Error while binding, connection deleted.\r\n");
+					state = 0;
+				}
+				break;
+			}
+			case 2: {
+				state++;
+				netconn_listen(conn_port102); /* Start port listening*/
+				LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
+						"Started port 102 listening.\r\n");
+				break;
+			}
+			case 3: {
+				struct netconn *arg_conn;
+				accept_err = netconn_accept(conn_port102, &arg_conn); /* Waiting for new connection */
+				if (accept_err == ERR_OK) {
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
+							"Create new task.\r\n");
+					sys_thread_new("tcp_serv_thread", Client_thread,
+							(void*) arg_conn,
+							DEFAULT_THREAD_STACKSIZE/2, osPriorityAboveNormal);
+				} else {
+					LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_ERR,
+							"Error while accepting. Error number: ");
+					LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, accept_err, 10);
+					LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ".\r\n");
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+}
+
 //---------------------------------------------------------------
 void StartHeapCleanerTask(void const * argument) {
 	uint8_t * heap_ptr;

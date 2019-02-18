@@ -86,9 +86,9 @@
 /*----- Default Value for MEMP_NUM_TCP_SEG: 16 ---*/
 #define MEMP_NUM_TCP_SEG 24
 /*----- Default Value for MEMP_NUM_NETBUF: 2 ---*/
-#define MEMP_NUM_NETBUF 4
+#define MEMP_NUM_NETBUF 16
 /*----- Default Value for MEMP_NUM_NETCONN: 4 ---*/
-#define MEMP_NUM_NETCONN 8
+#define MEMP_NUM_NETCONN 16
 /*----- Default Value for MEMP_NUM_TCPIP_MSG_API: 8 ---*/
 #define MEMP_NUM_TCPIP_MSG_API 16
 /*----- Value in opt.h for LWIP_ETHERNET: LWIP_ARP || PPPOE_SUPPORT -*/

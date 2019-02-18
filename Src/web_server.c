@@ -108,7 +108,7 @@ void Web_thread(void *arg) {
 								12) == 0) {
 							netconn_write(newconn, PAGE_HEADER,
 									strlen((char* )PAGE_HEADER), NETCONN_COPY);
-							LogText(SUB_SYS_WEB, LOG_LEV_INFO, "Reboot");
+							LogText(INFO_SHOW, SUB_SYS_WEB, LOG_LEV_INFO, "Reboot by command from web-client.\r\n");
 							reboot_flag = 1;
 						} else {
 							fs_open(&file, "/404.html");

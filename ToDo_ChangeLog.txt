@@ -24,7 +24,8 @@ v0.4.0  - Add reboot button (Web-page);
 		- Init sustem from flash data (Core);
 v0.5.0  - Multy-master mode fixed;	
 v0.6.0  - Connect automatically after disconnect; 
-v0.6.1  - Bug in protocol.c fixed;
-v0.6.2  - Bug in usart.c fixed (speed init);
-v0.6.3  - Delay befofe MPI init;
-v0.7.0  - Customizable Wep-port number
+  v0.6.1  - Bug in protocol.c fixed;
+  v0.6.2  - Bug in usart.c fixed (speed init);
+  v0.6.3  - Delay befofe MPI init;
+v0.7.0  - Customizable Wep-port number;
+v0.8.0  - Search during work;

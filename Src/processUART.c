@@ -42,8 +42,8 @@ void SendClosemMsg(uint8_t to, uint8_t from) {
 	uint8_t msg_len = 12;
 	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
 	if (msg_ptr == NULL) {
-		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
-				"Request buffer allocation error.");
+		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.\r\n");
 		Error_Handler();
 	}
 	tmp_ptr = msg_ptr;
@@ -70,8 +70,8 @@ void SendConfirmMsg(uint8_t to, uint8_t from, uint8_t size, uint8_t func) {
 	uint8_t msg_len = size + 6;
 	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
 	if (msg_ptr == NULL) {
-		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
-				"Request buffer allocation error.");
+		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.\r\n");
 		Error_Handler();
 	}
 	tmp_ptr = msg_ptr;
@@ -147,8 +147,8 @@ void SendRequestMsg(uint8_t to, uint8_t from, uint8_t* data, uint8_t data_len) {
 	uint8_t msg_len = data_len + 13;
 	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
 	if (msg_ptr == NULL) {
-		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
-				"Request buffer allocation error.");
+		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.\r\n");
 		Error_Handler();
 	}
 	tmp_ptr = msg_ptr;
@@ -179,8 +179,8 @@ void SendConnectMsg(uint8_t to, uint8_t from, uint8_t fc) {
 	uint8_t msg_len = data_len + 14;
 	msg_ptr = (uint8_t*) pvPortMalloc(msg_len);
 	if (msg_ptr == NULL) {
-		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
-				"Request buffer allocation error.");
+		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_ERR,
+				"Request buffer allocation error.\r\n");
 		Error_Handler();
 	}
 	tmp_ptr = msg_ptr;
@@ -224,12 +224,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 		if (xHigherPriorityTaskWoken == pdTRUE) {
 			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 		}
-	} else if (huart == hlog.interface) {
-		xQueueSendFromISR(cleaner_queue, &(hlog.interface->pTxBuffPtr),
-				&xHigherPriorityTaskWoken);
-		if (xHigherPriorityTaskWoken == pdTRUE) {
-			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-		}
 	}
 }
 
@@ -240,7 +234,7 @@ void StartProcessTask(void const * argument) {
 	error_t err = NO_ERR;
 	err = CB_Init(&inbuf_UART, UART_BUFF_SIZE);
 	if (err != NO_ERR) {
-		LogText(SUB_SYS_MEMORY, LOG_LEV_ERR,
+		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_ERR,
 				"Circular buffer allocation error.\r\n");
 	}
 	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);

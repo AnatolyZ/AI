@@ -1,6 +1,7 @@
-freertos.c:204:6:StartDefaultTask	32	static
-freertos.c:270:6:StartHeapCleanerTask	16	static
-freertos.c:122:13:configureTimerForRunTimeStats	8	static
-freertos.c:129:22:getRunTimeCounterValue	0	static
-freertos.c:138:6:vApplicationGetIdleTaskMemory	0	static
-freertos.c:152:6:MX_FREERTOS_Init	104	static
+freertos.c:208:6:StartDefaultTask	24	static
+freertos.c:249:6:StartCreatorTask	32	static
+freertos.c:320:6:StartHeapCleanerTask	16	static
+freertos.c:123:13:configureTimerForRunTimeStats	8	static
+freertos.c:130:22:getRunTimeCounterValue	0	static
+freertos.c:139:6:vApplicationGetIdleTaskMemory	0	static
+freertos.c:153:6:MX_FREERTOS_Init	128	static

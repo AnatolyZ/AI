@@ -14,11 +14,21 @@
 #include "cmsis_os.h"
 #include "stdlib.h"
 
+
+#define LOG_TIMEOUT 20U
+
 #ifdef LOG_ON
-#define LogText(sys, level, msg) LogText__((sys), (level), (msg))
+#define LogText(inf,sys, level, msg) LogText__((inf), (sys), (level), (uint8_t*)(msg))
+#define LogNum(inf, sys, level, num, base) LogNum__((inf), (sys), (level), (num), (base))
 #else
-#define LogText(sys, level, msg)
+#define LogText(inf, sys, level, msg)
+#define LogNum(inf, sys, level, num, base)
 #endif /* LOG_ON */
+
+typedef enum {
+	INFO_HIDE,
+	INFO_SHOW
+} info_presence;
 
 typedef enum {
 	SUB_SYS_MEMORY,
@@ -41,14 +51,15 @@ typedef enum {
 typedef struct {
 	UART_HandleTypeDef *interface;
 	uint8_t levels[NUM_OF_SUB_SYS];
+	xSemaphoreHandle mutex;
 } log_handler;
 
 extern log_handler hlog;
 
+
 void LogInit(UART_HandleTypeDef * log_if);
-void LogText__(log_sub_sys sys, log_level level, char *msg);
-void LogNum(log_sub_sys sys, log_level level, int number);
-void LogTextNum(log_sub_sys sys, log_level level, char *msg, int number);
+void LogText__(info_presence info,log_sub_sys sys, log_level level, uint8_t *msg);
+void LogNum__(info_presence info,log_sub_sys sys, log_level level, int number, uint8_t base);
 void LogSetOutputLevel(log_sub_sys sys, log_level level);
 void LogGlobalOn();
 void LogGlobalOff();
