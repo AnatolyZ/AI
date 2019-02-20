@@ -14,7 +14,7 @@
 		ver: "0.0.0",
 		sn: 0,
 		addr_MAC: "AA-BB-CC-DD-EE-FF",
-		web_port: 8088,
+		web_port: 48999
 	}
     var xhr1;
 	function onload(){		
@@ -34,30 +34,35 @@
 			document.getElementById('Addr_MAC').value = AI_data.addr_MAC;
 			document.getElementById('Serial').value = AI_data.sn;
 			document.getElementById('Version').innerHTML = AI_data.ver;
+			check_all();
 		}
-		xhr1.send(null);					
+		xhr1.send(null);		
 	}
 	var xhr2;
 	function button_click()	
 	{
-		if (confirm("Все внесенные изменения будут применены после перезагрузки устройства. На данный момент проверка коректности введенных данных не реализована. БУДТЕ ВНИМАТЕЛЬНЫ!!!"))
-		{
-			AI_data.addr_IP = document.getElementById('IP_addr').value;
-			AI_data.mask = document.getElementById('Subnet_addr').value;
-			AI_data.gate = document.getElementById('Gateway').value;
-			AI_data.port = document.getElementById('Port_num').value;
-			AI_data.web_port = document.getElementById('Web_port_num').value;
-			AI_data.speed = document.getElementById('Speed').value;
-			AI_data.addr_own = document.getElementById('Addr_own').value;			
-			AI_data.addr_MAC = document.getElementById('Addr_MAC').value;
-			AI_data.sn = document.getElementById('Serial').value;
-			xhr2 = new(XMLHttpRequest);
-			xhr2.open("GET", "json=" + JSON.stringify(AI_data) + Math.random(), true);
-			xhr2.responseType = "text";
-			xhr2.onload = function (oEvent) {
-				alert("Данные успешно переданы на устройство.");
+		if (confirm("Все внесенные изменения будут применены только после перезагрузки устройства."))
+		{	
+			if (check_all()) {
+				AI_data.addr_IP = document.getElementById('IP_addr').value;
+				AI_data.mask = document.getElementById('Subnet_addr').value;
+				AI_data.gate = document.getElementById('Gateway').value;
+				AI_data.port = document.getElementById('Port_num').value;
+				AI_data.web_port = document.getElementById('Web_port_num').value;
+				AI_data.speed = document.getElementById('Speed').value;
+				AI_data.addr_own = document.getElementById('Addr_own').value;			
+				AI_data.addr_MAC = document.getElementById('Addr_MAC').value;
+				AI_data.sn = document.getElementById('Serial').value;
+				xhr2 = new(XMLHttpRequest);
+				xhr2.open("GET", "json=" + JSON.stringify(AI_data) + Math.random(), true);
+				xhr2.responseType = "text";
+				xhr2.onload = function (oEvent) {
+					alert("Данные успешно переданы на устройство.");
+				}
+				xhr2.send(null);
+			} else {
+				alert("Ошибка. Проверьте корректность введенных данных.");
 			}
-			xhr2.send(null);
 		}
 	}
 	var xhr3;
@@ -71,6 +76,82 @@
 			onload();
 		}
 		xhr3.send(null);
+	}
+	function check_ip(arg_id)
+	{	
+		var regexp = /^(?=\d+\.\d+\.\d+\.\d+$)(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.?){4}$/;
+		var element = document.getElementById(arg_id);
+		var result = regexp.test(element.value);
+		if (!result){
+			element.classList.add('error-input-border'); 
+			element.classList.remove('correct-input-border'); 
+		} else {
+			element.classList.add('correct-input-border'); 
+			element.classList.remove('error-input-border'); 
+		}		
+		return result;
+	}
+	function check_mac(arg_id)
+	{	
+		var regexp = /^((([0-9A-F]{1,2}:){5})|(([0-9A-F]{1,2}-){5})|([0-9A-F]{10}))([0-9A-F]{1,2})$/i;
+		var element = document.getElementById(arg_id);
+		var result = regexp.test(element.value);
+		if (!result){
+			element.classList.add('error-input-border'); 
+			element.classList.remove('correct-input-border'); 
+		} else {
+			element.classList.add('correct-input-border'); 
+			element.classList.remove('error-input-border'); 
+		}		
+		return result;
+	}
+	function check_num(arg_id, min, max)
+	{	
+		var element = document.getElementById(arg_id);
+		var result = ((element.value >= min) && (element.value <= max));	
+		if (!result){
+			element.classList.add('error-input-border'); 
+			element.classList.remove('correct-input-border'); 
+		} else {
+			element.classList.add('correct-input-border'); 
+			element.classList.remove('error-input-border'); 
+		}		
+		return result;
+	}
+	function contains(arr, elem) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] == elem) {
+            return true;
+        }
+    }
+    return false;
+	}
+	function check_speed(arg_id)
+	{	
+		var element = document.getElementById(arg_id);
+		var speeds = [187500];
+		var result = contains(speeds,element.value);	
+		if (!result){
+			element.classList.add('error-input-border'); 
+			element.classList.remove('correct-input-border'); 
+		} else {
+			element.classList.add('correct-input-border'); 
+			element.classList.remove('error-input-border'); 
+		}		
+		return result;
+	}
+	function check_all(){
+		var result = true;
+		result &= check_ip('IP_addr');
+		result &= check_ip('Subnet_addr');
+		result &= check_ip('Gateway');
+		result &= check_num('Port_num',0,65535);
+		result &= check_num('Web_port_num',0,65535);
+		result &= check_speed('Speed');
+		result &= check_num('Addr_own',0,31);
+		result &= check_mac('Addr_MAC');
+		result &= check_num('Serial',0,65535);
+		return result;
 	}
   </script>
   <link rel="stylesheet" href="style.css">
@@ -93,44 +174,44 @@
 				</tr>		
 				<tr>
 					<td>IP-адрес</td>
-					<td align = "center" ><input id = "IP_addr" type="text"></td>
+					<td align = "center" ><input id = "IP_addr" type="text" oninput="check_ip('IP_addr')"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Маска подсети</td>
-					<td align = "center" ><input id = "Subnet_addr" type="text"></td>
+					<td align = "center" ><input id = "Subnet_addr" type="text" oninput="check_ip('Subnet_addr')"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Шлюз</td>
-					<td align = "center" ><input id = "Gateway" type="text"></td>
+					<td align = "center" ><input id = "Gateway" type="text" oninput="check_ip('Gateway')"></td>
 					</td>
 				</tr>		
 				<tr>
 					<td>Номер порта адаптера</td>
-					<td align = "center" ><input id = "Port_num" type="text"></td>
+					<td align = "center" ><input id = "Port_num" type="number" oninput="check_num('Port_num',0,65535)"></td>
 					</td>
 				</tr>				
 				<tr>
 					<td>Номер порта Web-интерфейса</td>
-					<td align = "center" ><input id = "Web_port_num" type="text"></td>
+					<td align = "center" ><input id = "Web_port_num" type="number" oninput="check_num('Web_port_num',0,65535)"></td>
 					</td>
 				</tr>	
 				<tr>
 					<td>Скорость обмена, Бод</td>
-					<td align = "center" ><input id = "Speed" type="text"></td>
+					<td align = "center" ><input id = "Speed" type="number" oninput="check_speed('Speed')"></td>
 				</tr>						
 				<tr>
 					<td>Адрес преобразователя</td>
-					<td align = "center" ><input id = "Addr_own" type="text"></td>
+					<td align = "center" ><input id = "Addr_own" type="number" oninput="check_num('Addr_own',0,31)"></td>
 				</tr>				
 				<tr>
 					<td>MAC-адрес</td>
-					<td align = "center" ><input id = "Addr_MAC" type="text"></td>
+					<td align = "center" ><input id = "Addr_MAC" type="text" oninput="check_mac('Addr_MAC')"></td>
 				</tr>				
 				<tr>
 					<td>Серийный номер</td>
-					<td align = "center" ><input id = "Serial" type="text"></td>
+					<td align = "center" ><input id = "Serial" type="number" oninput="check_num('Serial',0,65535)"></td>
 				</tr>
 				<tr>
 					<td>Версия ВПО</td>

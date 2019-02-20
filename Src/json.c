@@ -233,7 +233,7 @@ void JSONToFlash(json_data_t *js, flash_data_t *fs) {
 	for (int i = 0; i < 6; i++) {
 		uint8_t tok[3];
 		int j = 0;
-		while (j < 2 && *ptr != '-') {
+		while (j < 2 && *ptr != '-' && *ptr != ':') {
 			tok[j++] = *ptr++;
 		}
 		ptr++;

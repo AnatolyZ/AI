@@ -8,6 +8,7 @@
 #include "tcp_client.h"
 
 xQueueHandle tcp_client_queue;
+extern volatile int reboot_flag;
 
 void Client_thread(void *arg) {
 	err_t err;
@@ -32,20 +33,11 @@ void Client_thread(void *arg) {
 	netconn_getaddr(newconn, &ClientAddr, &ClientPort, 0);
 	task_num++;
 	inst_num = task_num;
-	LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO, "New TCP-server created.");
-	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ip4_addr1(&ClientAddr), 10);
-	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ".");
-	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ip4_addr2(&ClientAddr), 10);
-	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ".");
-	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ip4_addr3(&ClientAddr), 10);
-	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ".");
-	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ip4_addr4(&ClientAddr), 10);
-	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ":");
-	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ClientPort, 10);
-	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_ERR, ".\r\n");
-	LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_INFO, "Free heap size: ");
-	LogNum(INFO_HIDE, SUB_SYS_MEMORY, LOG_LEV_INFO, xPortGetFreeHeapSize(), 10);
-	LogText(INFO_HIDE, SUB_SYS_MEMORY, LOG_LEV_INFO, " bytes.\r\n");
+
+	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, "\r\n");
+	LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO, "New TCP-server created on port ");
+	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ClientPort, 10);
+	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ".\r\n");
 	LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO, "Number of task: ");
 	LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, task_num, 10);
 	LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ".\r\n");
@@ -57,6 +49,7 @@ void Client_thread(void *arg) {
 		while (err == ERR_OK) {
 			do {
 				netbuf_data(inbuf, (void**) &buf, &buflen);
+				if (inst_num != 1 && buf[17] == 0x04) reboot_flag = 1;
 				if (buf[7] == 0x32 && inst_num == 1) {
 					parcel_t parc;
 					parc.len = buflen - 7;
@@ -79,7 +72,7 @@ void Client_thread(void *arg) {
 					netconn_write(newconn, (const unsigned char* )(answer),
 							parc.len + 7, NETCONN_COPY);
 					vPortFree(answer);
-				} else if (buf[7] == 0x32 && inst_num != 1) {
+				} else if (buf[7] == 0x32 && buf[17] == 0xF0 && inst_num != 1 ) {
 					uint8_t * answer;
 					size_t data_size = sizeof(data_Connect);
 					answer = (uint8_t*) pvPortMalloc(data_size + 7);
@@ -121,10 +114,14 @@ void Client_thread(void *arg) {
 		task_num--;
 		netconn_close(newconn);
 		LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
-				"Connection Deleted.\r\n");
+				"Connection deleted on port: ");
+		LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ClientPort, 10);
+		LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ".\r\n");
 		netconn_delete(newconn);
 		LogText(INFO_SHOW, SUB_SYS_TCP, LOG_LEV_INFO,
-				"TCP-server task deleted.\r\n");
+				"TCP-server task deleted. Task number: ");
+		LogNum(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, inst_num, 10);
+		LogText(INFO_HIDE, SUB_SYS_TCP, LOG_LEV_INFO, ".\r\n");
 		LogText(INFO_SHOW, SUB_SYS_MEMORY, LOG_LEV_INFO, "Free heap size: ");
 		LogNum(INFO_HIDE, SUB_SYS_MEMORY, LOG_LEV_INFO, xPortGetFreeHeapSize(),
 				10);

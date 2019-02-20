@@ -9,3 +9,9 @@
   padding: 40px;
   font-family: arial;
 }
+.error-input-border {
+    border: 2px solid red;
+}
+.correct-input-border {
+    border: 2px solid green;
+}
