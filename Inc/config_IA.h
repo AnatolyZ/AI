@@ -11,10 +11,10 @@
 #include "eeprom.h"
 
 /* Firmware version: VER1.VER2.VER3 */
-#define VER1 0
-#define VER2 9
+#define VER1 1
+#define VER2 1
 #define VER3 0
-/* Current version 0.6.3 */
+/* Current version 1.1.0 */
 
 typedef struct {
 	uint32_t speed;

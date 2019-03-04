@@ -150,12 +150,12 @@
 		result &= check_speed('Speed');
 		result &= check_num('Addr_own',0,31);
 		result &= check_mac('Addr_MAC');
-		result &= check_num('Serial',0,65535);
+		result &= check_num('Serial',0,2147483647);
 		return result;
 	}
   </script>
   <link rel="stylesheet" href="style.css">
-  <title>Адаптер интерфейсов АИ-01</title>
+  <title>Адаптер интерфейсов АИ-01Д</title>
  </head>
 	<body onload = "onload()">
 		<div id = "header" >
@@ -163,7 +163,7 @@
 				<img src="img/logo.png" alt = "dispetcher_logo">
 			</p>
 			<p align = "center" >
-				Настройка параметров адаптера интерфейсов АИ-01
+				Настройка параметров адаптера интерфейсов АИ-01Д
 			</p>
 		</div>
 		<div id = "page" >		
@@ -211,7 +211,7 @@
 				</tr>				
 				<tr>
 					<td>Серийный номер</td>
-					<td align = "center" ><input id = "Serial" type="number" oninput="check_num('Serial',0,65535)"></td>
+					<td align = "center" ><input id = "Serial" type="number" oninput="check_num('Serial',0,2147483647)"></td>
 				</tr>
 				<tr>
 					<td>Версия ВПО</td>

@@ -188,7 +188,7 @@ void ParseJSON(json_data_t *js, uint8_t *json_str) {
 				} else if (strcmp((char*) Prev_keyString, "sn") == 0) {
 					if (js->serial_num
 							== ((DEFAULT_SN_MS << 16) + DEFAULT_SN_LS)) {
-						js->serial_num = (uint8_t) atoi((char*) keyString);
+						js->serial_num = (uint32_t) atoi((char*) keyString);
 					}
 				} else if (strcmp((char*) Prev_keyString, "addr_MAC") == 0) {
 					strcpy((char*) js->mac_addr, (char*) keyString);
