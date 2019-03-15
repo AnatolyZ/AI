@@ -91,10 +91,12 @@ void Client_thread(void *arg) {
 						&& (buf[2] == 0x00) && (buf[3] == 0x16)
 						&& (CheckMaster(&hprot, buf[21]))) {
 					data_COTP[18] = buf[21];
-					hprot.master_address = buf[21];
+					if (inst_num == 1) {
+						hprot.master_address = buf[21];
+					}
 					netconn_write(newconn, (const unsigned char* )(data_COTP),
 							sizeof(data_COTP), NETCONN_COPY);
-					if (hprot.conn_stat == CONN_CLOSED) {
+					if (hprot.conn_stat == CONN_CLOSED && inst_num == 1) {
 						hprot.conn_stat = CONN_AGAIN;
 					}
 					if (inst_num == 1) hprot.req_num = 0;
