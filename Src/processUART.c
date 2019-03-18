@@ -210,6 +210,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		HAL_UART_Receive_IT(&huart5, &received_byte, 1);
 		CB_Write(&inbuf_UART, received_byte);
 		__HAL_TIM_SET_COUNTER(&htim8, 0x00U);
+		__HAL_TIM_CLEAR_IT(&htim8,TIM_IT_UPDATE);
 		HAL_TIM_Base_Start_IT(&htim8);
 	}
 }

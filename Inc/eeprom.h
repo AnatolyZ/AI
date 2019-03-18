@@ -133,8 +133,8 @@ uint16_t EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
 #define 		IP_04_03_ADDR		2
 #define 		BR_MS_ADDR 		    3
 #define 		BR_LS_ADDR 		    4
-#define 		MPI_ADRR_ADDR	    5
-#define 		PORT_ADRR			6
+#define 		MPI_ADDR_ADDR	    5
+#define 		PORT_ADDR			6
 #define 		MASK_02_01_ADDR		7
 #define 		MASK_04_03_ADDR		8
 #define 		GATE_02_01_ADDR		9
@@ -147,7 +147,7 @@ uint16_t EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
 #define 		MAC_02_01_ADDR 		16
 #define 		MAC_04_03_ADDR		17
 #define 		MAC_06_05_ADDR 		18
-#define 		WEB_PORT_ADRR		19
+#define 		WEB_PORT_ADDR		19
 
 #endif /* __EEPROM_H */
 
