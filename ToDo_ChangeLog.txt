@@ -1,5 +1,5 @@
 ******************* ToDo ******************* 
----------- Core ----------
+---------- Core ----------	
 
 ---------- MPI/Profibus ----------
 
@@ -35,3 +35,5 @@ v1.1.0  - 31bit-serial number (2147483647 max);
 		- Device name changed (web-page);
   v1.1.1  - Search bug fixed	
   v1.1.2  - TIM8 clear, refactoring 	
+v1.2.0	- double flash saving	
+		- hardware reset	

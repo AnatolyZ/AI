@@ -71,6 +71,7 @@ void MX_GPIO_Init(void)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitTypeDef GPIO_InitStruct_In = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
@@ -90,6 +91,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+  GPIO_InitStruct_In.Pin = GPIO_PIN_3;
+  GPIO_InitStruct_In.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct_In.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct_In.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct_In);
 }
 
 /* USER CODE BEGIN 2 */

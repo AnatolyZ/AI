@@ -33,7 +33,7 @@ void FlashInit() {
 
 	uint16_t mem_key;
 	EE_ReadVariable(MEM_KEY_ADDR, &mem_key); /* Memory key reading */
-	if (mem_key != MEMORY_KEY) { /* First launching of device */
+	if ((mem_key != MEMORY_KEY) || HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_SET) { /* First launching of device */
 		/* Default FLASH initialization --------------------- */
 		EE_WriteVariable(MEM_KEY_ADDR, MEMORY_KEY);
 		EE_WriteVariable(IP_02_01_ADDR, DEFAULT_IP_02_01);
@@ -46,13 +46,27 @@ void FlashInit() {
 		EE_WriteVariable(MASK_04_03_ADDR, DEFAULT_MASK_04_03);
 		EE_WriteVariable(GATE_02_01_ADDR, DEFAULT_GATE_02_01);
 		EE_WriteVariable(GATE_04_03_ADDR, DEFAULT_GATE_04_03);
-		EE_WriteVariable(SN_MS_ADDR, DEFAULT_SN_MS);
-		EE_WriteVariable(SN_LS_ADDR, DEFAULT_SN_LS);
+		if (mem_key != MEMORY_KEY){
+			EE_WriteVariable(SN_MS_ADDR, DEFAULT_SN_MS);
+			EE_WriteVariable(SN_LS_ADDR, DEFAULT_SN_LS);
+		}
 		EE_WriteVariable(MAC_02_01_ADDR, DEFAULT_MAC_02_01);
 		EE_WriteVariable(MAC_04_03_ADDR, DEFAULT_MAC_04_03);
 		EE_WriteVariable(MAC_06_05_ADDR, DEFAULT_MAC_06_05);
 		EE_WriteVariable(WEB_PORT_ADDR, DEFAULT_WEB_PORT);
 		/* ---------------------------------------------- */
+		for (int i = 0; i < 20; i++) {
+			volatile register int j = 500000;
+			while (j) {
+				j--;
+			}
+			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_10);
+			j = 500000;
+			while (j) {
+				j--;
+			}
+			HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_9);
+		}
 	}
 	/* Variables initialization ------------------------------ */
 	union {
@@ -125,6 +139,8 @@ void SaveFash(void) {
 	tmp_u.ui32 = hflash.speed ;
 	EE_WriteVariable(BR_MS_ADDR, tmp_u.ui16[1]);
 	EE_WriteVariable(BR_LS_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(BR_MS_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(BR_LS_ADDR, tmp_u.ui16[0]);
 	/* IP-address */
 	tmp_u.ui8[0] = hflash.IP_addr[0];
 	tmp_u.ui8[1] = hflash.IP_addr[1];
@@ -132,13 +148,18 @@ void SaveFash(void) {
 	tmp_u.ui8[3] = hflash.IP_addr[3];
 	EE_WriteVariable(IP_02_01_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(IP_04_03_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(IP_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(IP_04_03_ADDR, tmp_u.ui16[1]);
 	/* MPI/Profibus address */
+	EE_WriteVariable(MPI_ADDR_ADDR, hflash.own_addr);
 	EE_WriteVariable(MPI_ADDR_ADDR, hflash.own_addr);
 	/* Subnet mask */
 	tmp_u.ui8[0] = hflash.mask[0];
 	tmp_u.ui8[1] = hflash.mask[1];
 	tmp_u.ui8[2] = hflash.mask[2];
 	tmp_u.ui8[3] = hflash.mask[3];
+	EE_WriteVariable(MASK_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(MASK_04_03_ADDR, tmp_u.ui16[1]);
 	EE_WriteVariable(MASK_02_01_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(MASK_04_03_ADDR, tmp_u.ui16[1]);
 	/* Gateway */
@@ -148,12 +169,18 @@ void SaveFash(void) {
 	tmp_u.ui8[3] = hflash.gate[3];
 	EE_WriteVariable(GATE_02_01_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(GATE_04_03_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(GATE_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(GATE_04_03_ADDR, tmp_u.ui16[1]);
 	/* Port number */
+	EE_WriteVariable(PORT_ADDR, hflash.port);
 	EE_WriteVariable(PORT_ADDR, hflash.port);
 	/* Web-port number */
 	EE_WriteVariable(WEB_PORT_ADDR, hflash.web_port);
+	EE_WriteVariable(WEB_PORT_ADDR, hflash.web_port);
 	/* Serial number */
 	tmp_u.ui32 = hflash.serial_num;
+	EE_WriteVariable(SN_MS_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(SN_LS_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(SN_MS_ADDR, tmp_u.ui16[1]);
 	EE_WriteVariable(SN_LS_ADDR, tmp_u.ui16[0]);
 	/* MAC address */
@@ -163,7 +190,10 @@ void SaveFash(void) {
 	tmp_u.ui8[3] = hflash.mac_addr[3];
 	EE_WriteVariable(MAC_02_01_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(MAC_04_03_ADDR, tmp_u.ui16[1]);
+	EE_WriteVariable(MAC_02_01_ADDR, tmp_u.ui16[0]);
+	EE_WriteVariable(MAC_04_03_ADDR, tmp_u.ui16[1]);
 	tmp_u.ui8[0] = hflash.mac_addr[4];
 	tmp_u.ui8[1] = hflash.mac_addr[5];
+	EE_WriteVariable(MAC_06_05_ADDR, tmp_u.ui16[0]);
 	EE_WriteVariable(MAC_06_05_ADDR, tmp_u.ui16[0]);
 }

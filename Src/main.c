@@ -123,6 +123,7 @@ int main(void) {
 
 	/* USER CODE BEGIN SysInit */
 	HAL_FLASH_Unlock();
+	MX_GPIO_Init();
 	EE_Init();
 	FlashInit();
 	ProtocolSettingsInit(&hprot);
@@ -130,7 +131,7 @@ int main(void) {
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
+
 	MX_DMA_Init();
 	MX_UART5_Init();
 	MX_TIM8_Init();
